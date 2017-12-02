@@ -1,0 +1,17 @@
+package: edge-anki-overtake
+import:
+- package: github.com/Shopify/sarama
+  version: ^1.14.0
+- package: github.com/rs/cors
+  version: ^1.2.0
+- package: github.com/wvanbergen/kafka
+  subpackages:
+  - consumergroup
+- package: github.com/okoeth/edge-anki-base
+  subpackages:
+  - anki
+- package: github.com/okoeth/muxlogger
+- package: goji.io
+  version: ^2.0.0
+  subpackages:
+  - pat

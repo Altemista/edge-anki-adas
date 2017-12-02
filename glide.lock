@@ -1,0 +1,52 @@
+hash: d93bd9e53ba75fe96a50d6660da4f4dd2b2a92449e653386998d7611fed21b74
+updated: 2017-12-02T17:40:40.117666087+01:00
+imports:
+- name: github.com/davecgh/go-spew
+  version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: b1fe83b5b03f624450823b751b662259ffc6af70
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/okoeth/edge-anki-base
+  version: 2120252028ff71587013c3a45ef9f35729c0c632
+  subpackages:
+  - anki
+- name: github.com/okoeth/muxlogger
+  version: 70aff701f023303513c9d68993cf434decba93da
+- name: github.com/pierrec/lz4
+  version: 08c27939df1bd95e881e2c2367a749964ad1fceb
+- name: github.com/pierrec/xxHash
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
+  subpackages:
+  - xxHash32
+- name: github.com/rcrowley/go-metrics
+  version: e181e095bae94582363434144c61a9653aff6e50
+- name: github.com/rs/cors
+  version: 7af7a1e09ba336d2ea14b1ce73bf693c6837dbf6
+- name: github.com/samuel/go-zookeeper
+  version: 471cd4e61d7a78ece1791fa5faa0345dc8c7d5a5
+  subpackages:
+  - zk
+- name: github.com/Shopify/sarama
+  version: 240fd146ce68bcafb034cc5dc977229ffbafa8ea
+- name: github.com/wvanbergen/kafka
+  version: bc265fedb9ff5b5c5d3c0fdcef4a819b3523d3ee
+  subpackages:
+  - consumergroup
+- name: github.com/wvanbergen/kazoo-go
+  version: 494a179ad10a1a52daa7536a82cc215bc728c399
+- name: goji.io
+  version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
+  subpackages:
+  - internal
+  - pat
+  - pattern
+testImports: []
