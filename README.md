@@ -1,7 +1,6 @@
-# Digital Twin for Anki Overdrive
-This is a digital twin of the Anki Overdrive which shows the current status of the cars. 
-The twin works both ways, which means that the cars can also be controlled from this twin,
-e.g. spped and lane offset.
+# Overtaking for Anki Overdrive
+This is a use case where two cars run on the same lane where the fast car 
+overtakes the slow car.
 
 ## Building and running it locally
 To build and start locally, run:
