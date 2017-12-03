@@ -73,12 +73,19 @@ angular.module('htmlApp')
 			}
 		};
 
-		// Handler function for pinging the car
-		$scope.requestPing = function (carNo) {			
+		// Handler function starting car1
+		$scope.startCar = function (carNo) {			
 			console.log('INFO: Handling requestPing for carno '+carNo);
+			var param = '';
+			if (carNo===1) {
+				param = ''+MainConfig.lowSpeed;
+			} else if (carNo===2) {
+				param = ''+MainConfig.highSpeed;
+			}
 			var command = {
-				command: 'ping',
-				carNo: carNo,
+				command: 's',
+				param1: param,
+				carNo: ''+carNo,
 				source: 'ui'
 			};
 			MainFactory.postCommand(command)
@@ -92,179 +99,18 @@ angular.module('htmlApp')
 				);
 		};
 
-		// Handler function for version of the car
-		$scope.requestVersion = function (carNo) {
-			console.log('INFO: Handling requestVersion for carno '+carNo);
-			var command = {
-				command: 'ver',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: Version command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeSpeedUp of the car (250-1000)
-		$scope.changeSpeedUp = function (carNo) {
-			console.log('INFO: Handling changeSpeedUp for carno '+carNo);
-			var command = {
-				command: 's',
-				param1: ''+MainConfig.highSpeed,
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: SpeedUp command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeSpeedDown of the car (250-1000)
-		$scope.changeSpeedDown = function (carNo) {
-			console.log('INFO: Handling changeSpeedDown for carno '+carNo);
-			var command = {
-				command: 's',
-				param1: ''+MainConfig.slowSpeed,
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: SpeedDown command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeSpeedStop of the car (250-1000)
-		$scope.changeSpeedStop = function (carNo) {
-			console.log('INFO: Handling changeSpeedStop for carno '+carNo);
+		// Handler function starting car2
+		$scope.stopCar = function (carNo) {			
+			console.log('INFO: Handling requestPing for carno '+carNo);
 			var command = {
 				command: 'e',
-				carNo: carNo,
+				carNo: ''+carNo,
 				source: 'ui'
 			};
 			MainFactory.postCommand(command)
 				.then(
 				function (response) { // ok
-					console.log('INFO: SpeedStop command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeLaneLeft with the car (-68-+68)
-		$scope.changeLaneLeft = function (carNo) {
-			console.log('INFO: Handling changeLaneLeft for carno '+carNo);
-			var command = {
-				command: 'c',
-				param1: '-68',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: changeLaneLeft command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeLaneRight with the car (-68-+68)
-		$scope.changeLaneRight = function (carNo) {
-			console.log('INFO: Handling changeLaneRight for carno '+carNo);
-			var command = {
-				command: 'c',
-				param1: '68',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: changeLaneRight command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for showInitialise
-		$scope.showInitialise = function (carNo) {
-			console.log('INFO: Handling showInitialise for carno '+carNo);
-		};
-
-		// Handler function for changeLight
-		$scope.changeLight = function (carNo) {
-			console.log('INFO: Handling changeLight for carno '+carNo);
-			var command = {
-				command: 'l',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: changeLight command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for changeLightPattern
-		$scope.changeLightPattern = function (carNo) {
-			console.log('INFO: Handling changeLightPattern for carno '+carNo);
-			var command = {
-				command: 'lp',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: changeLightPattern command submitted to server: '+response.statusText);
-				},
-				function (response) { // nok
-					console.error('ERROR: Request failed: ' + response.statusText);
-				}
-				);
-		};
-
-		// Handler function for requestLevel
-		$scope.requestLevel = function (carNo) {
-			console.log('INFO: Handling requestLevel for carno '+carNo);
-			var command = {
-				command: 'bat',
-				carNo: carNo,
-				source: 'ui'
-			};
-			MainFactory.postCommand(command)
-				.then(
-				function (response) { // ok
-					console.log('INFO: requestLevel command submitted to server: '+response.statusText);
+					console.log('INFO: Ping command submitted to server: '+response.statusText);
 				},
 				function (response) { // nok
 					console.error('ERROR: Request failed: ' + response.statusText);

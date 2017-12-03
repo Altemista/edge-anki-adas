@@ -22,10 +22,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
-	"github.com/Shopify/sarama"
-	"github.com/okoeth/edge-anki-base/anki"
+	anki "github.com/okoeth/edge-anki-base"
 	"github.com/okoeth/muxlogger"
 	"goji.io"
 	"goji.io/pat"
@@ -34,12 +32,14 @@ import (
 type (
 	// OvertakeController represents the controller for working with this app
 	OvertakeController struct {
+		track []anki.Status
+		cmdCh chan anki.Command
 	}
 )
 
 // NewOvertakeController provides a reference to an IncomingController
-func NewOvertakeController() *OvertakeController {
-	return &OvertakeController{}
+func NewOvertakeController(t []anki.Status, ch chan anki.Command) *OvertakeController {
+	return &OvertakeController{track: t, cmdCh: ch}
 }
 
 // AddHandlers inserts new greeting
@@ -48,9 +48,10 @@ func (oc *OvertakeController) AddHandlers(mux *goji.Mux) {
 	mux.HandleFunc(pat.Post("/v1/overtake/command"), muxlogger.Logger(oc.PostCommand))
 }
 
-// GetStatus inserts new greeting
+// GetStatus retrieves latest status
 func (oc *OvertakeController) GetStatus(w http.ResponseWriter, r *http.Request) {
-	sj, err := json.Marshal(TheStatus)
+	// TODO: There is a race condition around concurrent access to track
+	sj, err := json.Marshal(oc.track)
 	if err != nil {
 		mlog.Println("ERROR: Error de-marshaling TheStatus")
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,26 +65,15 @@ func (oc *OvertakeController) GetStatus(w http.ResponseWriter, r *http.Request) 
 // PostCommand sends a command via Kafka to the controller
 func (oc *OvertakeController) PostCommand(w http.ResponseWriter, r *http.Request) {
 	// Read command from request
-	cmd := &anki.Command{}
-	err := json.NewDecoder(r.Body).Decode(cmd)
+	cmd := anki.Command{}
+	err := json.NewDecoder(r.Body).Decode(&cmd)
 	if err != nil {
 		mlog.Printf("ERROR: Error decoding request body: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	cmdstr, err := cmd.ControllerString()
-	if err != nil {
-		mlog.Println("ERROR: Error decoding command to commend string")
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	mlog.Printf("INFO: Received command string: %s", cmdstr)
-	// Send message to broker
-	TheProducer.Input() <- &sarama.ProducerMessage{
-		Value:     sarama.StringEncoder(cmdstr),
-		Topic:     "Command" + cmd.CarNo,
-		Partition: 0,
-		Timestamp: time.Now(),
-	}
+	mlog.Printf("INFO: Sending command to channel")
+	oc.cmdCh <- cmd
+	mlog.Printf("INFO: Command processed by channel")
 	w.WriteHeader(http.StatusOK)
 }

@@ -32,7 +32,7 @@ function startsWithCharAt(string, pattern) {
 }
 
 if (startsWithCharAt(window.location.href, 'http://localhost:9000')) {
-	baseURL = 'http://localhost:8000';
+	baseURL = 'http://localhost:8002';
 	console.log('INFO: Using hard coded dev server at: ' + baseURL);
 }
 
@@ -47,10 +47,10 @@ angular.module('htmlApp')
 	.factory('MainFactory', ['$http', function ($http) {
 		var MainFactory = {};
 		MainFactory.getStatus = function () {
-			return $http.get(baseURL + '/v1/twin/status');
+			return $http.get(baseURL + '/v1/overtake/status');
 		};
 		MainFactory.postCommand = function (command) {
-			return $http.post(baseURL + '/v1/twin/command', command);
+			return $http.post(baseURL + '/v1/overtake/command', command);
 		};
 		return MainFactory;
 	}]);
@@ -65,8 +65,8 @@ angular.module('htmlApp')
 angular.module('htmlApp')
 .factory('MainConfig', function () {
 	var MainConfig = {};
-	MainConfig.slowSpeed = 250;
-	MainConfig.highSpeed = 750;
+	MainConfig.lowSpeed = 250;
+	MainConfig.highSpeed = 500;
 	return MainConfig;
 });
 

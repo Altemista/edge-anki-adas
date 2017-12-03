@@ -25,63 +25,36 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/wvanbergen/kafka/consumergroup"
-
-	"github.com/Shopify/sarama"
-	"github.com/okoeth/edge-anki-base/anki"
+	anki "github.com/okoeth/edge-anki-base"
 	"github.com/rs/cors"
 	"goji.io"
 	"goji.io/pat"
 )
 
-// Variable mlog is the logger for the app
+// Logging
 var mlog = log.New(os.Stdout, "EDGE-ANKI-OVTK: ", log.Lshortfile|log.LstdFlags)
-
-// TheStatus carries the latest status information
-var TheStatus = [3]anki.Status{}
-
-// TheProducer provides a reference to the Kafka producer
-var TheProducer sarama.AsyncProducer
-
-// TheConsumer provides a reference to the Kafka producer
-var TheConsumer *consumergroup.ConsumerGroup
 
 func init() {
 	flag.Parse()
 }
 
 func main() {
-	// Initialise Cars
-	TheStatus[0].CarNo = "1"
-	TheStatus[1].CarNo = "2"
-	TheStatus[2].CarNo = "3"
-
-	// Set-up Kafka
-	kafkaServer := os.Getenv("KAFKA_SERVER")
-	if kafkaServer == "" {
-		mlog.Printf("INFO: Using 127.0.0.1 as default KAFKA_SERVER.")
-		kafkaServer = "127.0.0.1"
-	}
-	p, err := anki.CreateKafkaProducer(kafkaServer + ":9092")
+	// Set-up channels for status and commands
+	cmdCh, statusCh, err := anki.CreateChannels("edge.overtake")
 	if err != nil {
-		mlog.Fatalf("ERROR: Cannot create Kafka producer: %s", err)
+		mlog.Fatalln("FATAL: Could not establish channels: %s", err)
 	}
-	TheProducer = p
-	c, err := anki.CreateKafkaConsumer(kafkaServer+":2181", "edge.overtake", TheStatus)
-	if err != nil {
-		mlog.Fatalf("ERROR: Cannot create Kafka consumer: %s", err)
-	}
-	TheConsumer = c
+	track := anki.CreateTrack()
 
 	// Go and watch the track
-	go watchTrack()
+	go watchTrack(track, cmdCh, statusCh)
 
 	// Set-up routes
 	mux := goji.NewMux()
-	tc := NewOvertakeController()
+	tc := NewOvertakeController(track, cmdCh)
 	tc.AddHandlers(mux)
 	mux.Handle(pat.Get("/html/*"), http.FileServer(http.Dir("html/dist/")))
 	corsHandler := cors.Default().Handler(mux)
-	mlog.Printf("INFO: System is ready.\n")
+	mlog.Println("INFO: System is ready.")
 	http.ListenAndServe("0.0.0.0:8002", corsHandler)
 }

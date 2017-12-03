@@ -39,14 +39,14 @@ type (
 		Offset            float32   `json:"offset"`
 		Speed             int       `json:"speed"`
 		PieceID           int       `json:"real_piece_id"`
-		PieceNo           int       `json:"piece_id"`
+		PieceNo           int       `json:"piece_id_XXX"`
 		PieceLocation     int       `json:"piece_location"`
 		PositionTimestamp time.Time `json:"position_timestamp"`
 	}
 )
 
 // MergeStatusUpdate updates fields as per message type
-func (s *Status) MergeStatusUpdate(u *Status) {
+func (s *Status) MergeStatusUpdate(u Status) {
 	if u.StatusID == "23" {
 		// No update, just a ping
 	} else if u.StatusID == "25" {

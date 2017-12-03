@@ -20,11 +20,26 @@ DEALINGS IN THE SOFTWARE.
 -->
 
 <div>
-  <p><a class="btn btn-lg btn-success" ng-click="togglePoll()" >{{ text }}</a></p>
-  <br>
-  <p><a class="btn btn-lg btn-success" ng-click="startCar(1)" >Start Car1</a></p>
-  <p><a class="btn btn-lg btn-success" ng-click="stopCar(1)" >Stop Car1</a></p>
-  <br>
-  <p><a class="btn btn-lg btn-success" ng-click="startCar(2)" >Start Car2</a></p>
-  <p><a class="btn btn-lg btn-success" ng-click="stopCar(2)" >Stop Car2</a></p>
+	<p>
+		<a class="btn btn-lg btn-success" ng-click="save()">Save</a>
+	</p>
+	<br>
+	<p>
+		<table>
+			<tr>
+				<td>Slow Speed:&nbsp;&nbsp;</td>
+				<td>
+					<input type="text" class="form-control" ng-model="slowSpeed"/>
+				</td>
+				<td><br><br><br></td>
+			</tr>
+			<tr>
+				<td>High Speed:&nbsp;&nbsp;</td>
+				<td>
+					<input type="text" class="form-control" ng-model="highSpeed"/>
+				</td>
+			</tr>
+			<td><br><br><br></td>
+		</table>
+	</p>
 </div>

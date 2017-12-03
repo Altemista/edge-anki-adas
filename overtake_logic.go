@@ -19,11 +19,25 @@
 
 package main
 
-import "time"
+import (
+	"time"
 
-func watchTrack() {
+	anki "github.com/okoeth/edge-anki-base"
+)
+
+func watchTrack(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
+	lastTick := time.Now()
+	ticker := time.NewTicker(5000 * 1e6) // 1e6 = ms, 1e9 = s
+	defer ticker.Stop()
 	for {
-		mlog.Printf("INFO: I'm watching the track")
-		time.Sleep(1 * 1e9)
+		select {
+		case s := <-statusCh:
+			mlog.Printf("INFO: Received status update from channel")
+			anki.UpdateTrack(track, s)
+		case <-ticker.C:
+			thisTick := time.Now()
+			mlog.Printf("INFO: I'm watching the track at: %v (Delay: %v)", thisTick, lastTick.Sub(thisTick))
+			lastTick = thisTick
+		}
 	}
 }
