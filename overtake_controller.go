@@ -44,8 +44,8 @@ func NewOvertakeController(t []anki.Status, ch chan anki.Command) *OvertakeContr
 
 // AddHandlers inserts new greeting
 func (oc *OvertakeController) AddHandlers(mux *goji.Mux) {
-	mux.HandleFunc(pat.Get("/v1/overtake/status"), muxlogger.Logger(oc.GetStatus))
-	mux.HandleFunc(pat.Post("/v1/overtake/command"), muxlogger.Logger(oc.PostCommand))
+	mux.HandleFunc(pat.Get("/v1/overtake/status"), muxlogger.Logger(mlog, oc.GetStatus))
+	mux.HandleFunc(pat.Post("/v1/overtake/command"), muxlogger.Logger(mlog, oc.PostCommand))
 }
 
 // GetStatus retrieves latest status

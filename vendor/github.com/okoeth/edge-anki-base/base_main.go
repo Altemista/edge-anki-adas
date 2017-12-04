@@ -30,6 +30,11 @@ import (
 // Variable plog is the logger for the package
 var plog = log.New(os.Stdout, "EDGE-ANKI-BASE: ", log.Lshortfile|log.LstdFlags)
 
+// SetLogger sets-up the
+func SetLogger(l *log.Logger) {
+	plog = l
+}
+
 // CreateTrack sets-up the
 func CreateTrack() []Status {
 	track := [4]Status{}

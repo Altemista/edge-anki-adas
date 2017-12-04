@@ -25,25 +25,21 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
-// Variable plog is the logger for the package
-var plog = log.New(os.Stdout, "MUX-HTTP-LOGGER: ", log.Lshortfile|log.LstdFlags)
-
 // Logger is the actual implementation of the middleware
-func Logger(handler http.HandlerFunc) http.HandlerFunc {
+func Logger(log *log.Logger, handler http.HandlerFunc) http.HandlerFunc {
 	logger := func(w http.ResponseWriter, r *http.Request) {
-		plog.Printf("INFO: Request: %s/%d.%d %s %s", r.Proto, r.ProtoMajor, r.ProtoMinor, r.Method, r.URL.Path)
-		plog.Printf("INFO:   Header: %s", logHeader(r.Header))
-		plog.Printf("INFO:   Body: %s", logBody(r))
+		log.Printf("INFO: Request: %s/%d.%d %s %s", r.Proto, r.ProtoMajor, r.ProtoMinor, r.Method, r.URL.Path)
+		log.Printf("INFO:   Header: %s", logHeader(log, r.Header))
+		log.Printf("INFO:   Body: %s", logBody(log, r))
 		handler.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(logger)
 }
 
 // logHeader prints the header
-func logHeader(header http.Header) string {
+func logHeader(log *log.Logger, header http.Header) string {
 	hs := fmt.Sprintf("{ ")
 	for name, values := range header {
 		for _, value := range values {
@@ -54,11 +50,11 @@ func logHeader(header http.Header) string {
 }
 
 // logBody prints the header
-func logBody(r *http.Request) string {
+func logBody(log *log.Logger, r *http.Request) string {
 	body, err := ioutil.ReadAll(r.Body)
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	if err != nil {
-		plog.Printf("ERROR: Error sending HTTP request: %v", err)
+		log.Printf("ERROR: Error sending HTTP request: %v", err)
 		return ""
 	}
 	return string(body)
