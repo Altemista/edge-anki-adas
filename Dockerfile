@@ -19,9 +19,9 @@
 
 FROM golang:1.9
 USER 1001
-WORKDIR /go/src/edge-anki-overtake
-COPY . /go/src/edge-anki-overtake
+WORKDIR /go/src/edge-anki-adas
+COPY . /go/src/edge-anki-adas
 RUN go test 
 RUN go install 
-EXPOSE 8002
-ENTRYPOINT [ "/go/bin/edge-anki-overtake"]
+EXPOSE 8003
+ENTRYPOINT [ "/go/bin/edge-anki-adas"]

@@ -1,6 +1,5 @@
-# Overtaking for Anki Overdrive
-This is a use case where two cars run on the same lane where the fast car 
-overtakes the slow car.
+# ADAS for Anki Overdrive
+This is an ADAS which drives Anki cars on the track.
 
 ## Building and running it locally
 To build and start locally, run:

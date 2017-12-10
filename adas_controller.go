@@ -30,26 +30,26 @@ import (
 )
 
 type (
-	// OvertakeController represents the controller for working with this app
-	OvertakeController struct {
+	// AdasController represents the controller for working with this app
+	AdasController struct {
 		track []anki.Status
 		cmdCh chan anki.Command
 	}
 )
 
-// NewOvertakeController provides a reference to an IncomingController
-func NewOvertakeController(t []anki.Status, ch chan anki.Command) *OvertakeController {
-	return &OvertakeController{track: t, cmdCh: ch}
+// NewAdasController provides a reference to an IncomingController
+func NewAdasController(t []anki.Status, ch chan anki.Command) *AdasController {
+	return &AdasController{track: t, cmdCh: ch}
 }
 
 // AddHandlers inserts new greeting
-func (oc *OvertakeController) AddHandlers(mux *goji.Mux) {
-	mux.HandleFunc(pat.Get("/v1/overtake/status"), muxlogger.Logger(mlog, oc.GetStatus))
-	mux.HandleFunc(pat.Post("/v1/overtake/command"), muxlogger.Logger(mlog, oc.PostCommand))
+func (oc *AdasController) AddHandlers(mux *goji.Mux) {
+	mux.HandleFunc(pat.Get("/v1/adas/status"), oc.GetStatus) // Omitting logger for GetStatus
+	mux.HandleFunc(pat.Post("/v1/adas/command"), muxlogger.Logger(mlog, oc.PostCommand))
 }
 
 // GetStatus retrieves latest status
-func (oc *OvertakeController) GetStatus(w http.ResponseWriter, r *http.Request) {
+func (oc *AdasController) GetStatus(w http.ResponseWriter, r *http.Request) {
 	// TODO: There is a race condition around concurrent access to track
 	sj, err := json.Marshal(oc.track)
 	if err != nil {
@@ -63,7 +63,7 @@ func (oc *OvertakeController) GetStatus(w http.ResponseWriter, r *http.Request) 
 }
 
 // PostCommand sends a command via Kafka to the controller
-func (oc *OvertakeController) PostCommand(w http.ResponseWriter, r *http.Request) {
+func (oc *AdasController) PostCommand(w http.ResponseWriter, r *http.Request) {
 	// Read command from request
 	cmd := anki.Command{}
 	err := json.NewDecoder(r.Body).Decode(&cmd)

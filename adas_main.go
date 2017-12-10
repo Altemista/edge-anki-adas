@@ -20,24 +20,41 @@
 package main
 
 import (
-	"time"
+	"flag"
+	"log"
+	"net/http"
+	"os"
 
 	anki "github.com/okoeth/edge-anki-base"
+	"github.com/rs/cors"
+	"goji.io"
+	"goji.io/pat"
 )
 
-func watchTrack(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
-	lastTick := time.Now()
-	ticker := time.NewTicker(5000 * 1e6) // 1e6 = ms, 1e9 = s
-	defer ticker.Stop()
-	for {
-		select {
-		case s := <-statusCh:
-			mlog.Printf("INFO: Received status update from channel")
-			anki.UpdateTrack(track, s)
-		case <-ticker.C:
-			thisTick := time.Now()
-			mlog.Printf("INFO: I'm watching the track at: %v (Delay: %v)", thisTick, lastTick.Sub(thisTick))
-			lastTick = thisTick
-		}
+// Logging
+var mlog = log.New(os.Stdout, "EDGE-ANKI-OVTK: ", log.Lshortfile|log.LstdFlags)
+
+func init() {
+	flag.Parse()
+}
+
+func main() {
+	// Set-up channels for status and commands
+	cmdCh, statusCh, err := anki.CreateChannels("edge.adas")
+	if err != nil {
+		mlog.Fatalln("FATAL: Could not establish channels: %s", err)
 	}
+	track := anki.CreateTrack()
+
+	// Go and drive cars on track
+	go driveCars(track, cmdCh, statusCh)
+
+	// Set-up routes
+	mux := goji.NewMux()
+	tc := NewAdasController(track, cmdCh)
+	tc.AddHandlers(mux)
+	mux.Handle(pat.Get("/html/*"), http.FileServer(http.Dir("html/dist/")))
+	corsHandler := cors.Default().Handler(mux)
+	mlog.Println("INFO: System is ready.")
+	http.ListenAndServe("0.0.0.0:8003", corsHandler)
 }

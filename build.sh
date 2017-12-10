@@ -36,14 +36,14 @@ if [ xfrontend = x$1 ]; then
 fi
 
 # Build Backend
-docker build -t $DOCKER_USER/edge-anki-overtake .
+docker build -t $DOCKER_USER/edge-anki-adas .
 if [ $? -ne 0 ]; then
     echo "ERROR building backend"
     exit 1
 fi
 
 # Push image
-docker push $DOCKER_USER/edge-anki-overtake
+docker push $DOCKER_USER/edge-anki-adas
 if [ $? -ne 0 ]; then
     echo "ERROR pushing image"
     exit 1
