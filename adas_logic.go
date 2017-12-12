@@ -26,7 +26,7 @@ import (
 )
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
-	ticker := time.NewTicker(5000 * 1e6) // 1e6 = ms, 1e9 = s
+	ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
 	defer ticker.Stop()
 	for {
 		select {
