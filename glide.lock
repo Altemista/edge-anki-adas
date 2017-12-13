@@ -1,5 +1,5 @@
-hash: d0b7a980d3d87d0c0fb67ea3bf6142dcda01e72419af263d310ceec8a84c2180
-updated: 2017-12-03T15:31:20.523627601+01:00
+hash: 6ec393b18b26a15de51eee897df19d92a0cf4ffc3d17d85bd2039a64074f2606
+updated: 2017-12-13T09:05:54.468438477+01:00
 imports:
 - name: github.com/davecgh/go-spew
   version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
@@ -16,7 +16,7 @@ imports:
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/okoeth/edge-anki-base
-  version: d67bdc3c2d9f5fd387d9b8034468b64dffae981e
+  version: 6330ec0aabd64da24f143a2218c79cfb1af4530b
   subpackages:
   - anki
 - name: github.com/okoeth/muxlogger
@@ -36,9 +36,9 @@ imports:
   subpackages:
   - zk
 - name: github.com/Shopify/sarama
-  version: 240fd146ce68bcafb034cc5dc977229ffbafa8ea
+  version: 3b1b38866a79f06deddf0487d5c27ba0697ccd65
 - name: github.com/wvanbergen/kafka
-  version: bc265fedb9ff5b5c5d3c0fdcef4a819b3523d3ee
+  version: e2edea948ddfee841ea9a263b32ccca15f7d6c2f
   subpackages:
   - consumergroup
 - name: github.com/wvanbergen/kazoo-go

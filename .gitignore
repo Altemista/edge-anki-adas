@@ -1,2 +1,4 @@
 edge-anki-twin
 .DS_Store
+.idea
+vendor

@@ -45,6 +45,17 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 }
 
 func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
+	//mlog.Printf("Track of carNo %d, %+v\n", carNo, track)
+
+	//Get position info for car
+	for i := range track {
+		if track[i].CarNo == carNo {
+			mlog.Printf("Track of carNo %d, %+v\n", carNo, track[i])
+			break
+		}
+	}
+
+	//TODO: Iterative approach to find most left lane etc.
 	if canDriveOn(carNo, track, cmdCh) {
 		driveAhead(carNo, track, cmdCh)
 	} else {
@@ -62,27 +73,130 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	}
 }
 
+/**
+CRITERIA:
+Check the lane of the current car
+If there is any car on the current lane and the same tile
+	return false
+Else
+	return true
+ */
 func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	return false
+	var currentCarState = getStateForCarNo(carNo, track)
+
+	//Check all other car states
+	for index, otherCarState := range track {
+		if index != carNo && otherCarState.LaneNo == currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+			mlog.Printf("WARNING: Cars are on same lane and tile")
+			return false
+		}
+	}
+
+	return true
 }
 
+/**
+CRITERIA:
+Check if the car is on the most left lane (4) -> False
+Else
+	If there is any car on the current lane + 1 and the same tile
+		return false
+	Else
+		return true
+
+ */
 func canChangeLeft(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	return false
+	var currentCarState = getStateForCarNo(carNo, track)
+
+	if currentCarState.LaneNo >= 4 {
+		return false
+	}
+
+	//Check all other car states
+	for index, otherCarState := range track {
+		if index != carNo && otherCarState.LaneNo+1 != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+			mlog.Printf("WARNING: Other car on left lane, no change possible")
+			return false
+		}
+	}
+
+	return true
 }
 
+/**
+CRITERIA:
+Check if the car is on the most right lane (1)
+Else
+	If there is any car on the current lane - 1 and the same tile
+		return false
+	Else
+		return true
+ */
 func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	return false
+	var currentCarState = getStateForCarNo(carNo, track)
+
+	if currentCarState.LaneNo <= 1 {
+		return false
+	}
+
+	//Check all other car states
+	for index, otherCarState := range track {
+		if index != carNo && otherCarState.LaneNo-1 != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+			mlog.Printf("WARNING: Other car on right lane, no change possible")
+			return false
+		}
+	}
+
+	return true
 }
 
+/**
+CRITERIA:
+Find car that is blocking us and adjust speed to the speed of the blocking car
+ */
 func adjustSpeed(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	return false
+	var currentCarState = getStateForCarNo(carNo, track)
+	var blockingCarState anki.Status
+
+	//Check all other car states
+	for index, otherCarState := range track {
+		if index != carNo && otherCarState.LaneNo != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+			mlog.Printf("WARNING: Other car on left lane, no change possible")
+			blockingCarState = otherCarState
+		}
+	}
+
+	//Change speed according to car before
+	cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: string(blockingCarState.CarSpeed)}
+	cmdCh <- cmd
+	return true
 }
 
+/**
+Simply drive on
+ */
 func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
+	mlog.Printf("INFO: Drive ahead")
 }
 
+/**
+Initiate left change
+ */
 func changeToLeftLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
+	mlog.Printf("INFO: Changing to left lane")
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param2: "left"}
+	cmdCh <- cmd
 }
 
+/**
+Initiate right change
+ */
 func changeToRightLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
+	mlog.Printf("INFO: Changing to right lane")
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param2: "right"}
+	cmdCh <- cmd
+}
+
+func getStateForCarNo(carNo int, track []anki.Status) anki.Status {
+	return track[carNo]
 }

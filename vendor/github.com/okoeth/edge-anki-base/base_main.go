@@ -22,6 +22,7 @@ package anki
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -37,26 +38,27 @@ func SetLogger(l *log.Logger) {
 
 // CreateTrack sets-up the
 func CreateTrack() []Status {
-	track := [4]Status{}
+	track := [5]Status{}
 	for i := 0; i < 4; i++ {
-		track[i].CarNo = string(i + 1)
+		track[i].CarNo = i
 	}
+	track[4].CarNo = -1
 	return track[:]
 }
 
 // UpdateTrack merges a new status update in the track
 func UpdateTrack(track []Status, update Status) {
 	plog.Printf("INFO: Updating track from status update")
-	if update.CarNo == "1" {
+	if update.CarNo == 0 {
 		track[0].MergeStatusUpdate(update)
-	} else if update.CarNo == "2" {
+	} else if update.CarNo == 1 {
 		track[1].MergeStatusUpdate(update)
-	} else if update.CarNo == "3" {
+	} else if update.CarNo == 2 {
 		track[2].MergeStatusUpdate(update)
-	} else if update.CarNo == "4" {
+	} else if update.CarNo == 3 {
 		track[3].MergeStatusUpdate(update)
 	} else {
-		plog.Printf("WARNING: Ignoring message from unknown carNo: %s", update.CarNo)
+		plog.Printf("WARNING: Ignoring message from unknown carNo: %d", update.CarNo)
 	}
 }
 
@@ -97,7 +99,7 @@ func sendCommand(p sarama.AsyncProducer, ch chan Command) {
 		}
 		p.Input() <- &sarama.ProducerMessage{
 			Value:     sarama.StringEncoder(cmdstr),
-			Topic:     "Command" + cmd.CarNo,
+			Topic:     "Command" + strconv.Itoa(cmd.CarNo),
 			Partition: 0,
 			Timestamp: time.Now(),
 		}
