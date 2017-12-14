@@ -26,7 +26,8 @@ import (
 )
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
-	ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
+	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
+	ticker := time.NewTicker(500 * 1e6) // 1e6 = ms, 1e9 = s
 	defer ticker.Stop()
 	for {
 		select {
@@ -45,29 +46,34 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 }
 
 func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
-	//mlog.Printf("Track of carNo %d, %+v\n", carNo, track)
+	//mlog.Printf("Status of carNo %d, %+v\n", carNo, track)
 
 	//Get position info for car
-	for i := range track {
-		if track[i].CarNo == carNo {
-			mlog.Printf("Track of carNo %d, %+v\n", carNo, track[i])
-			break
-		}
-	}
+	//for i := range track {
+	//	if track[i].CarNo == carNo {
+	//		mlog.Printf("Track of carNo %d, %+v\n", carNo, track[i])
+	//		break
+	//	}
+	//}
 
 	//TODO: Iterative approach to find most left lane etc.
-	if canDriveOn(carNo, track, cmdCh) {
-		driveAhead(carNo, track, cmdCh)
-	} else {
-		if canChangeLeft(carNo, track, cmdCh) {
+	//TODO: Zero timestmap
+
+	if !getStateForCarNo(carNo, track).MsgTimestamp.IsZero() {
+		mlog.Printf("CarNo %d", carNo)
+		if canDriveOn(carNo, track, cmdCh) {
 			driveAhead(carNo, track, cmdCh)
-			changeToLeftLane(carNo, track, cmdCh)
 		} else {
-			if canChangeRight(carNo, track, cmdCh) {
+			if canChangeLeft(carNo, track, cmdCh) {
 				driveAhead(carNo, track, cmdCh)
-				changeToRightLane(carNo, track, cmdCh)
+				changeToLeftLane(carNo, track, cmdCh)
 			} else {
-				adjustSpeed(carNo, track, cmdCh)
+				if canChangeRight(carNo, track, cmdCh) {
+					driveAhead(carNo, track, cmdCh)
+					changeToRightLane(carNo, track, cmdCh)
+				} else {
+					adjustSpeed(carNo, track, cmdCh)
+				}
 			}
 		}
 	}
@@ -86,12 +92,13 @@ func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if index != carNo && otherCarState.LaneNo == currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+		if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo &&
+			otherCarState.PosTileNo == currentCarState.PosTileNo {
 			mlog.Printf("WARNING: Cars are on same lane and tile")
 			return false
 		}
 	}
-
+	mlog.Printf("DEBUG: Can drive on")
 	return true
 }
 
@@ -114,12 +121,14 @@ func canChangeLeft(carNo int, track []anki.Status, cmdCh chan anki.Command) bool
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if index != carNo && otherCarState.LaneNo+1 != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+		if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo+1 &&
+			otherCarState.PosTileNo == currentCarState.PosTileNo {
 			mlog.Printf("WARNING: Other car on left lane, no change possible")
 			return false
 		}
 	}
 
+	mlog.Printf("DEBUG: Can change left")
 	return true
 }
 
@@ -141,12 +150,15 @@ func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) boo
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if index != carNo && otherCarState.LaneNo-1 != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
-			mlog.Printf("WARNING: Other car on right lane, no change possible")
-			return false
+		if index > carNo {
+			if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo-1 &&
+				otherCarState.PosTileNo == currentCarState.PosTileNo {
+				mlog.Printf("WARNING: Other car on right lane, no change possible")
+				return false
+			}
 		}
 	}
-
+	mlog.Printf("DEBUG: Can change right")
 	return true
 }
 
@@ -160,10 +172,13 @@ func adjustSpeed(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if index != carNo && otherCarState.LaneNo != currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
-			mlog.Printf("WARNING: Other car on left lane, no change possible")
-			blockingCarState = otherCarState
+		if index > carNo {
+			if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+				mlog.Printf("WARNING: Other car in front")
+				blockingCarState = otherCarState
+			}
 		}
+
 	}
 
 	//Change speed according to car before
@@ -184,8 +199,10 @@ Initiate left change
  */
 func changeToLeftLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("INFO: Changing to left lane")
-	cmd := anki.Command{ CarNo: carNo, Command: "c", Param2: "left"}
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: "3"}
 	cmdCh <- cmd
+
+	mlog.Printf("Command sent %+v\n", cmd)
 }
 
 /**
@@ -193,8 +210,10 @@ Initiate right change
  */
 func changeToRightLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("INFO: Changing to right lane")
-	cmd := anki.Command{ CarNo: carNo, Command: "c", Param2: "right"}
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: "", Param2: "right"}
 	cmdCh <- cmd
+
+	mlog.Printf("Command sent %+v\n", cmd)
 }
 
 func getStateForCarNo(carNo int, track []anki.Status) anki.Status {
