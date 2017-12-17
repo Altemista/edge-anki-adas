@@ -56,6 +56,13 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	//	}
 	//}
 
+	//TODO:
+	//Can't drive on
+	//While lane > 0 and lane <= 4
+	//	Try left (lane)
+	//	Try right (lane)
+	//If no change possible, adjust speed
+
 	//TODO: Iterative (recursive?) approach to find most left lane etc.
 	//TODO: Zero timestmap
 	var currentCarState = getStateForCarNo(carNo, track)
@@ -177,7 +184,10 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 
 	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
-	if otherCarState.LaneNo == laneNo {
+	// Other car must be on same lane and on next or current tile
+	if otherCarState.LaneNo == laneNo && (
+		otherCarState.PosTileNo == currentCarState.PosTileNo ||
+			otherCarState.PosTileNo == nextTileNo) {
 		var distanceDelta float64 = 0
 		//1. Check if cars are on same tiles
 		if otherCarState.PosTileNo == currentCarState.PosTileNo &&
@@ -190,7 +200,7 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 				(float64(currentCarState.LaneLength) - currentDistanceTravelled)
 		}
 
-		mlog.Println("DEBUG: Distance is %f", distanceDelta)
+		mlog.Println("DEBUG: Distance is ", distanceDelta)
 
 		// Check if distance is enough in respect to speed
 		// It is not enough if the distanceDelta is lower than

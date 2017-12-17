@@ -11,6 +11,16 @@ func TestCanDriveOn(t *testing.T) {
 
 	var track = getEmptyStatusArray()
 
+	//Two cars, same lane, different tiles, far away
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 200}
+
+	if !canDriveOn(0, track, nil) {
+		t.Failed()
+	}
+
 	//Two cars, same lane, different tiles, enough distance
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
 	PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
@@ -153,6 +163,7 @@ func TestAdjustSpeed(t *testing.T) {
 }
 
 func TestCalculatePosition(t *testing.T) {
+	t.Log("TEST: Calculate position")
 	var distanceTravelled = CalculateDistanceTravelled(200, 200)
 
 	if distanceTravelled - 37.4 > 0.0001 {

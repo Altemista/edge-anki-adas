@@ -1,10 +1,15 @@
 hash: 6ec393b18b26a15de51eee897df19d92a0cf4ffc3d17d85bd2039a64074f2606
-updated: 2017-12-13T09:05:54.468438477+01:00
+updated: 2017-12-17T18:32:49.245709502+01:00
 imports:
+- name: github.com/codegangsta/inject
+  version: 33e0aa1cb7c019ccc3fbe049a8262a6403d30504
+- name: github.com/codegangsta/negroni
+  version: cc68f18cd7e1157c71811df1396496a9db0e997d
 - name: github.com/davecgh/go-spew
   version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
   subpackages:
   - spew
+  - spew/testdata
 - name: github.com/eapache/go-resiliency
   version: b1fe83b5b03f624450823b751b662259ffc6af70
   subpackages:
@@ -13,20 +18,35 @@ imports:
   version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/go-martini/martini
+  version: 22fa46961aabd2665cf3f1343b146d20028f5071
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 5ab525f4fb1678e197ae59401e9050fa0b6cb5fd
+- name: github.com/julienschmidt/httprouter
+  version: e1b9828bc9e5904baec057a154c09ca40fe7fae0
+- name: github.com/justinas/alice
+  version: 03f45bd4b7dad4734bc4620e46a35789349abb20
+- name: github.com/martini-contrib/render
+  version: ec18f8345a1181146728238980606fb1d6f40e8c
 - name: github.com/okoeth/edge-anki-base
-  version: 6330ec0aabd64da24f143a2218c79cfb1af4530b
+  version: 0532a184cbdca8b48c4640a82e038e134af594c5
   subpackages:
   - anki
 - name: github.com/okoeth/muxlogger
   version: 92af94f8c27c62a45001c73b8a9bcc54f6db59ea
+- name: github.com/oxtoacart/bpool
+  version: 4e1c5567d7c2dd59fa4c7c83d34c2f3528b025d6
 - name: github.com/pierrec/lz4
   version: 08c27939df1bd95e881e2c2367a749964ad1fceb
 - name: github.com/pierrec/xxHash
   version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
   subpackages:
   - xxHash32
+  - xxHash64
 - name: github.com/rcrowley/go-metrics
   version: e181e095bae94582363434144c61a9653aff6e50
 - name: github.com/rs/cors
@@ -37,16 +57,33 @@ imports:
   - zk
 - name: github.com/Shopify/sarama
   version: 3b1b38866a79f06deddf0487d5c27ba0697ccd65
+  subpackages:
+  - mocks
+- name: github.com/stathat/go
+  version: 74669b9f388d9d788c97399a0824adbfee78400e
 - name: github.com/wvanbergen/kafka
   version: e2edea948ddfee841ea9a263b32ccca15f7d6c2f
   subpackages:
   - consumergroup
 - name: github.com/wvanbergen/kazoo-go
   version: 494a179ad10a1a52daa7536a82cc215bc728c399
+- name: github.com/zenazn/goji
+  version: c05078ca81941f8e801bba3ddc0e6b86b7fdc893
+  subpackages:
+  - bind
+  - graceful
+  - graceful/listener
+  - web
+  - web/middleware
+  - web/mutil
 - name: goji.io
   version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
   subpackages:
   - internal
   - pat
   - pattern
-testImports: []
+testImports:
+- name: github.com/Shopify/toxiproxy
+  version: a32143133e8cdad36feb1ad9a48ffefb7451b7d9
+  subpackages:
+  - client
