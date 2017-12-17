@@ -58,8 +58,9 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 
 	//TODO: Iterative (recursive?) approach to find most left lane etc.
 	//TODO: Zero timestmap
-
-	if !getStateForCarNo(carNo, track).MsgTimestamp.IsZero() {
+	var currentCarState = getStateForCarNo(carNo, track)
+	if !currentCarState.MsgTimestamp.IsZero() &&
+		!currentCarState.TransitionTimestamp.IsZero(){
 		mlog.Printf("CarNo %d", carNo)
 		if canDriveOn(carNo, track, cmdCh) {
 			driveAhead(carNo, track, cmdCh)
@@ -89,14 +90,13 @@ Else
  */
 func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	var currentCarState = getStateForCarNo(carNo, track)
-	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if !otherCarState.MsgTimestamp.IsZero() && index != carNo &&
-			hasCarInFront(otherCarState, currentCarState.LaneNo, nextTileNo) &&
+		if timeStampsValid(otherCarState) && index != carNo &&
+			hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo) &&
 				otherCarState.CarSpeed < currentCarState.CarSpeed {
-			mlog.Printf("WARNING: Other car on same lane next  tile")
+			mlog.Printf("WARNING: Other car on same lane")
 			return false
 		}
 	}
@@ -116,7 +116,6 @@ Else
  */
 func canChangeLeft(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	var currentCarState = getStateForCarNo(carNo, track)
-	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
 	if currentCarState.LaneNo >= 4 {
 		return false
@@ -124,9 +123,8 @@ func canChangeLeft(carNo int, track []anki.Status, cmdCh chan anki.Command) bool
 
 	//Check all other car states of same and next tile
 	for index, otherCarState := range track {
-		if !otherCarState.MsgTimestamp.IsZero() && index != carNo &&
-			hasCarInFront(otherCarState, currentCarState.LaneNo+1, currentCarState.PosTileNo) &&
-			hasCarInFront(otherCarState, currentCarState.LaneNo+1, nextTileNo){
+		if timeStampsValid(otherCarState) && index != carNo &&
+			hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo+1) {
 			mlog.Printf("WARNING: Other car on left lane, no change possible")
 			return false
 		}
@@ -147,7 +145,6 @@ Else
  */
 func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	var currentCarState = getStateForCarNo(carNo, track)
-	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
 	if currentCarState.LaneNo <= 1 {
 		return false
@@ -156,9 +153,8 @@ func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) boo
 	//Check all other car states
 	for index, otherCarState := range track {
 		if index > carNo {
-			if !otherCarState.MsgTimestamp.IsZero() && index != carNo &&
-				hasCarInFront(otherCarState, currentCarState.LaneNo-1, currentCarState.PosTileNo) &&
-				hasCarInFront(otherCarState, currentCarState.LaneNo-1, nextTileNo) {
+			if timeStampsValid(otherCarState) && index != carNo &&
+				hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo-1) {
 				mlog.Printf("WARNING: Other car on right lane, no change possible")
 				return false
 			}
@@ -168,10 +164,42 @@ func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) boo
 	return true
 }
 
-func hasCarInFront(otherCarState anki.Status, laneNo int, tileNo int) bool {
-	if otherCarState.LaneNo == laneNo && otherCarState.PosTileNo == tileNo {
-		return true
+func timeStampsValid(carState anki.Status) bool {
+	return !carState.MsgTimestamp.IsZero() && !carState.TransitionTimestamp.IsZero()
+}
+
+func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneNo int) bool {
+	var currentTimeDelta = time.Since(currentCarState.TransitionTimestamp).Seconds() * 1000
+	var currentDistanceTravelled = CalculateDistanceTravelled(currentCarState.CarSpeed, currentTimeDelta)
+	var otherTimeDelta = time.Since(otherCarState.TransitionTimestamp).Seconds() * 1000
+	var otherDistanceTravelled = CalculateDistanceTravelled(otherCarState.CarSpeed, otherTimeDelta)
+	var distanceInTimeStep = CalculateDistanceTravelled(currentCarState.CarSpeed, 200)
+
+	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
+
+	if otherCarState.LaneNo == laneNo {
+		var distanceDelta float64 = 0
+		//1. Check if cars are on same tiles
+		if otherCarState.PosTileNo == currentCarState.PosTileNo &&
+			otherDistanceTravelled > currentDistanceTravelled{
+			distanceDelta = otherDistanceTravelled - currentDistanceTravelled
+
+		} else if otherCarState.PosTileNo == nextTileNo {
+			//2. Check if other car is on next tile
+			distanceDelta = otherDistanceTravelled +
+				(float64(currentCarState.LaneLength) - currentDistanceTravelled)
+		}
+
+		mlog.Println("DEBUG: Distance is %f", distanceDelta)
+
+		// Check if distance is enough in respect to speed
+		// It is not enough if the distanceDelta is lower than
+		// What the car would travel in 1.5 intervals
+		if distanceDelta < distanceInTimeStep*1.5 {
+			return true
+		}
 	}
+
 	return false
 }
 
@@ -195,7 +223,8 @@ func calculateSpeed(carNo int, track []anki.Status) int {
 	//Check all other car states
 	for index, otherCarState := range track {
 		if index > carNo {
-			if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo && otherCarState.PosTileNo == currentCarState.PosTileNo {
+			if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo &&
+				otherCarState.PosTileNo == currentCarState.PosTileNo {
 				mlog.Printf("WARNING: Other car in front")
 				blockingCarState = otherCarState
 				return blockingCarState.CarSpeed
