@@ -23,6 +23,7 @@ import (
 	"time"
 
 	anki "github.com/okoeth/edge-anki-base"
+	"strconv"
 )
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
@@ -64,7 +65,6 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	//If no change possible, adjust speed
 
 	//TODO: Iterative (recursive?) approach to find most left lane etc.
-	//TODO: Zero timestmap
 	var currentCarState = getStateForCarNo(carNo, track)
 	if !currentCarState.MsgTimestamp.IsZero() &&
 		!currentCarState.TransitionTimestamp.IsZero(){
@@ -72,16 +72,11 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 		if canDriveOn(carNo, track, cmdCh) {
 			driveAhead(carNo, track, cmdCh)
 		} else {
-			if canChangeLeft(carNo, track, cmdCh) {
+			if availableLane := getAvailableLane(carNo, track, cmdCh); availableLane != -1 {
 				driveAhead(carNo, track, cmdCh)
-				changeToLeftLane(carNo, track, cmdCh)
+				changeLane(carNo, track, cmdCh, availableLane)
 			} else {
-				if canChangeRight(carNo, track, cmdCh) {
-					driveAhead(carNo, track, cmdCh)
-					changeToRightLane(carNo, track, cmdCh)
-				} else {
-					adjustSpeed(carNo, track, cmdCh)
-				}
+				adjustSpeed(carNo, track, cmdCh)
 			}
 		}
 	}
@@ -111,64 +106,39 @@ func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	return true
 }
 
-/**
-CRITERIA:
-Check if the car is on the most left lane (4) -> False
-Else
-	If there is any car on the current lane + 1 and the same tile
-		return false
-	Else
-		return true
 
- */
-func canChangeLeft(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	var currentCarState = getStateForCarNo(carNo, track)
+func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) int {
+	var currentCarState= getStateForCarNo(carNo, track)
 
-	if currentCarState.LaneNo >= 4 {
-		return false
-	}
+	//Check for all possible lanes
+	var suggestedLaneIndex= -1
+	var laneAvailable= false
 
-	//Check all other car states of same and next tile
-	for index, otherCarState := range track {
-		if timeStampsValid(otherCarState) && index != carNo &&
-			hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo+1) {
-			mlog.Printf("WARNING: Other car on left lane, no change possible")
-			return false
+	for _, laneOffset := range []int{1, -1, 2, -2, 3, -3} {
+		laneAvailable = true
+		suggestedLaneIndex = currentCarState.LaneNo + laneOffset
+
+		if suggestedLaneIndex < 1 || suggestedLaneIndex > 4 {
+			continue
 		}
-	}
 
-	mlog.Printf("DEBUG: Can change left")
-	return true
-}
-
-/**
-CRITERIA:
-Check if the car is on the most right lane (1)
-Else
-	If there is any car on the current lane - 1 and the same tile
-		return false
-	Else
-		return true
- */
-func canChangeRight(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
-	var currentCarState = getStateForCarNo(carNo, track)
-
-	if currentCarState.LaneNo <= 1 {
-		return false
-	}
-
-	//Check all other car states
-	for index, otherCarState := range track {
-		if index > carNo {
-			if timeStampsValid(otherCarState) && index != carNo &&
-				hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo-1) {
-				mlog.Printf("WARNING: Other car on right lane, no change possible")
-				return false
+		//Check all other car states of same and next tile
+		for index, otherCarState := range track {
+			if !timeStampsValid(otherCarState) && index != carNo &&
+				hasCarInFront(otherCarState, currentCarState, suggestedLaneIndex) {
+				mlog.Printf("WARNING: Other car on lane %d, no change possible", suggestedLaneIndex)
+				laneAvailable = false
+				break
 			}
 		}
+
+		if laneAvailable {
+			mlog.Printf("DEBUG: Can change to lane %d", suggestedLaneIndex)
+			return suggestedLaneIndex
+		}
 	}
-	mlog.Printf("DEBUG: Can change right")
-	return true
+
+	return -1
 }
 
 func timeStampsValid(carState anki.Status) bool {
@@ -255,20 +225,9 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 /**
 Initiate left change
  */
-func changeToLeftLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
-	mlog.Printf("INFO: Changing to left lane")
-	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: "3"}
-	cmdCh <- cmd
-
-	mlog.Printf("Command sent %+v\n", cmd)
-}
-
-/**
-Initiate right change
- */
-func changeToRightLane(carNo int, track []anki.Status, cmdCh chan anki.Command) {
-	mlog.Printf("INFO: Changing to right lane")
-	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: "", Param2: "right"}
+func changeLane(carNo int, track []anki.Status, cmdCh chan anki.Command, laneNo int) {
+	mlog.Printf("INFO: Changing to lane %d", laneNo)
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: strconv.Itoa(laneNo)}
 	cmdCh <- cmd
 
 	mlog.Printf("Command sent %+v\n", cmd)

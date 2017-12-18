@@ -52,8 +52,8 @@ func TestCanDriveOn(t *testing.T) {
 	}
 }
 
-func TestCanDriveLeft(t *testing.T) {
-	t.Log("TEST: Starting testCanDriveLeft")
+func TestGetAvailableLane(t *testing.T) {
+	t.Log("TEST: Starting testGetAvailableLane")
 
 	var track = getEmptyStatusArray()
 
@@ -63,7 +63,8 @@ func TestCanDriveLeft(t *testing.T) {
 	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
 		PosLocation: 1, LaneNo: 3, MaxTileNo: 6, LaneLength: 800, CarSpeed: 200}
 
-	if !canChangeLeft(0, track, nil) {
+	//Should change to lane 3
+	if getAvailableLane(0, track, nil) != 3 {
 		t.Failed()
 	}
 
@@ -73,71 +74,50 @@ func TestCanDriveLeft(t *testing.T) {
 	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-400 * time.Millisecond),
 		PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 200}
 
-	if canChangeLeft(0, track, nil) {
+	if getAvailableLane(0, track, nil) != 1 {
 		t.Failed()
 	}
 
-	//Two cars, different lane, same tile, not enough distance
+	//Two cars, same tile, car 2 left of car 1
+	//Car would change to lane 1 as 3 is blocked
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
 		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 250}
 	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-200 * time.Millisecond),
 		PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 200}
 
-	if canChangeLeft(0, track, nil) {
+	if getAvailableLane(0, track, nil) != 1 {
 		t.Failed()
 	}
 
-	//Two cars, different lane, car 2 on same tile but far enough, car 2 left of car 1, car 0 at most left lane
-	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 4, MaxTileNo: 6, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-400 * time.Millisecond),
-		PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 200}
+	//Two cars, car 0 is at most left lane
+	//lane 3 is blocked
+	//should give lane 2
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 4, MaxTileNo: 6}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6}
 
-	if canChangeLeft(0, track, nil) {
-		t.Failed()
-	}
-}
-
-func TestCanDriveRight(t *testing.T) {
-	t.Log("TEST: Starting testCanDriveRight")
-
-	var track = getEmptyStatusArray()
-
-	//Two cars, different lane, different tiles, should work
-	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 3, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 200}
-
-	if !canChangeRight(0, track, nil) {
+	if getAvailableLane(0, track, nil) != 2 {
 		t.Failed()
 	}
 
-	//Two cars, different lane, car 2 on same tile but far enough, car 2 left of car 1
-	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-400 * time.Millisecond),
-		PosTileNo: 2, PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 200}
+	//Two cars, car 0 is at most right lane
+	//lane 3 is blocked
+	//should give lane 2
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 0, MaxTileNo: 6}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6}
 
-	if canChangeRight(0, track, nil) {
+	if getAvailableLane(0, track, nil) != 2 {
 		t.Failed()
 	}
 
-	//Two cars, different lane, same tile, not enough distance
-	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-200 * time.Millisecond),
-		PosTileNo: 2, PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 200}
+	//Block all lanes
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 4, MaxTileNo: 6}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6}
+	track[2] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 2, MaxTileNo: 6}
+	track[3] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), PosTileNo: 2, PosLocation: 1, LaneNo: 1, MaxTileNo: 6}
 
-	if canChangeRight(0, track, nil) {
+	if getAvailableLane(0, track, nil) != -1 {
 		t.Failed()
 	}
-
-	//Two cars, different lane, car 2 on same tile but far enough, car 2 left of car 1, car 0 at most left lane
-	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 1, MaxTileNo: 6, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-400 * time.Millisecond),
-		PosTileNo: 2, PosLocation: 1, LaneNo: 3, MaxTileNo: 6, CarSpeed: 200}
 }
 
 func TestAdjustSpeed(t *testing.T) {
