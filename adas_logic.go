@@ -124,7 +124,7 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 
 		//Check all other car states of same and next tile
 		for index, otherCarState := range track {
-			if !timeStampsValid(otherCarState) && index != carNo &&
+			if timeStampsValid(otherCarState) && index != carNo &&
 				hasCarInFront(otherCarState, currentCarState, suggestedLaneIndex) {
 				mlog.Printf("WARNING: Other car on lane %d, no change possible", suggestedLaneIndex)
 				laneAvailable = false
