@@ -23,6 +23,7 @@ import (
 	"time"
 
 	anki "github.com/okoeth/edge-anki-base"
+	"strconv"
 )
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
@@ -191,8 +192,8 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 Initiate left change
  */
 func changeLane(carNo int, track []anki.Status, cmdCh chan anki.Command, laneNo int) {
-	mlog.Printf("INFO: Changing to left lane")
-	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: string(laneNo)}
+	mlog.Printf("INFO: Changing to lane %d", laneNo)
+	cmd := anki.Command{ CarNo: carNo, Command: "c", Param1: strconv.Itoa(laneNo)}
 	cmdCh <- cmd
 
 	mlog.Printf("Command sent %+v\n", cmd)
