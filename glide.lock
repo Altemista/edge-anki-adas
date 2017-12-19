@@ -1,5 +1,5 @@
-hash: 6ec393b18b26a15de51eee897df19d92a0cf4ffc3d17d85bd2039a64074f2606
-updated: 2017-12-18T12:58:29.172435235+01:00
+hash: 8195dfeebac161ec928510ba649b7628a129295616019db4c6afe8e7f8388bd8
+updated: 2017-12-19T08:58:41.179954459+01:00
 imports:
 - name: github.com/davecgh/go-spew
   version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
@@ -13,6 +13,10 @@ imports:
   version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/golang-collections/collections
+  version: 604e922904d35e97f98a774db7881f049cd8d970
+  subpackages:
+  - stack
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/okoeth/edge-anki-base

@@ -24,7 +24,12 @@ import (
 
 	anki "github.com/okoeth/edge-anki-base"
 	"strconv"
+	stack "github.com/golang-collections/collections/stack"
+	"math"
 )
+
+var crossingTileCarQueue stack.Stack
+var crossingWaitingCarQueue stack.Stack
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
 	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
@@ -67,20 +72,60 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 
 	//TODO: Iterative (recursive?) approach to find most left lane etc.
 	var currentCarState = getStateForCarNo(carNo, track)
-	if !currentCarState.MsgTimestamp.IsZero() &&
-		!currentCarState.TransitionTimestamp.IsZero(){
+	if messageWithIntegrity(currentCarState) {
 		mlog.Printf("CarNo %d", carNo)
-		if canDriveOn(carNo, track, cmdCh) {
-			driveAhead(carNo, track, cmdCh)
-		} else {
-			if availableLane := getAvailableLane(carNo, track, cmdCh); availableLane != -1 {
+		if canDriveCrossing(carNo, track, 10) {
+			if canDriveOn(carNo, track, cmdCh) {
 				driveAhead(carNo, track, cmdCh)
-				changeLane(carNo, track, cmdCh, availableLane)
 			} else {
-				adjustSpeed(carNo, track, cmdCh)
+				if availableLane := getAvailableLane(carNo, track, cmdCh); availableLane != -1 {
+					driveAhead(carNo, track, cmdCh)
+					changeLane(carNo, track, cmdCh, availableLane)
+				} else {
+					adjustSpeed(carNo, track, cmdCh)
+				}
 			}
+		} else {
+			stopCar(carNo, cmdCh)
 		}
 	}
+}
+
+func messageWithIntegrity(currentCarState anki.Status) bool {
+	if !currentCarState.MsgTimestamp.IsZero() &&
+		!currentCarState.TransitionTimestamp.IsZero() &&
+			currentCarState.MaxTileNo != 0 &&
+				currentCarState.LaneLength != 0{
+			return true
+	}
+	return false
+}
+
+func canDriveCrossing(carNo int, track []anki.Status, crossingTileNo int) bool {
+	var currentCarState = getStateForCarNo(carNo, track)
+
+	//Check if last tile was crossing
+	if (currentCarState.PosTileNo-1) % currentCarState.MaxTileNo == crossingTileNo {
+		crossingTileCarQueue.Pop()
+	}
+
+	//Check if next tile is crossing
+	if (currentCarState.PosTileNo+1)%currentCarState.MaxTileNo == crossingTileNo {
+		if crossingTileCarQueue.Len() > 0 {
+			crossingWaitingCarQueue.Push(currentCarState.CarNo)
+			mlog.Println("WARNING: Can not pass crossing")
+			return false
+		} else {
+			crossingTileCarQueue.Push(currentCarState.CarNo)
+		}
+	}
+	mlog.Println("DEBUG: Can pass crossing")
+	return true
+}
+
+func stopCar(carNo int, cmdCh chan anki.Command) {
+	cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: strconv.Itoa(0)}
+	cmdCh <- cmd
 }
 
 /**
@@ -97,8 +142,8 @@ func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	//Check all other car states
 	for index, otherCarState := range track {
 		if timeStampsValid(otherCarState) && index != carNo &&
-			hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo) &&
-				otherCarState.CarSpeed < currentCarState.CarSpeed {
+			otherCarState.CarSpeed < currentCarState.CarSpeed &&
+			hasCarInFront(otherCarState, currentCarState, currentCarState.LaneNo) {
 			mlog.Printf("WARNING: Other car on same lane")
 			return false
 		}
@@ -115,7 +160,8 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 	var suggestedLaneIndex= -1
 	var laneAvailable= false
 
-	for _, laneOffset := range []int{1, -1, 2, -2, 3, -3} {
+	//for _, laneOffset := range []int{1, -1, 2, -2, 3, -3} {
+	for _, laneOffset := range []int{2, -2, 3, -3} {
 		laneAvailable = true
 		suggestedLaneIndex = currentCarState.LaneNo + laneOffset
 
@@ -151,7 +197,9 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 	var currentDistanceTravelled = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), currentTimeDelta)
 	var otherTimeDelta = time.Since(otherCarState.TransitionTimestamp).Seconds() * 1000
 	var otherDistanceTravelled = CalculateDistanceTravelled(float32(otherCarState.CarSpeed), otherTimeDelta)
-	var distanceInTimeStep = CalculateDistanceTravelled(float32(currentCarState.CarSpeed) * 1.5, 200)
+
+	//Lane change takes about 900ms, so we have to change far before
+	var distanceInTimeStep = math.Max(200.0, CalculateDistanceTravelled(float32(currentCarState.CarSpeed), 900))
 
 	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
@@ -159,20 +207,26 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 	if otherCarState.LaneNo == laneNo && (
 		otherCarState.PosTileNo == currentCarState.PosTileNo ||
 			otherCarState.PosTileNo == nextTileNo) {
-		var distanceDelta float64 = 0
+
+		var distanceDelta float64 = -1
+
 		//1. Check if cars are on same tiles
 		if otherCarState.PosTileNo == currentCarState.PosTileNo &&
-			otherDistanceTravelled > currentDistanceTravelled{
+			currentDistanceTravelled < otherDistanceTravelled {
 			distanceDelta = otherDistanceTravelled - currentDistanceTravelled
-
 		} else if otherCarState.PosTileNo == nextTileNo {
 			//2. Check if other car is on next tile
 			distanceDelta = otherDistanceTravelled +
 				(float64(currentCarState.LaneLength) - currentDistanceTravelled)
 		}
 
+		mlog.Printf("DEBUG: Next probable position %f", distanceInTimeStep)
 		mlog.Printf("DEBUG: Car pos: tile %d, pos: %f", currentCarState.PosTileNo, currentDistanceTravelled)
 		mlog.Printf("DEBUG: Car pos other: tile %d, pos: %f", otherCarState.PosTileNo, otherDistanceTravelled)
+		mlog.Printf("DEBUG: Car speed: %d", currentCarState.CarSpeed)
+		mlog.Printf("DEBUG: Car speed other: %d", otherCarState.CarSpeed)
+		mlog.Printf("DEBUG: Car time delta: %f", currentTimeDelta)
+		mlog.Printf("DEBUG: Car time delta other: %f", otherTimeDelta)
 		mlog.Printf("DEBUG: Lane length %d", currentCarState.LaneLength)
 		mlog.Printf("DEBUG: lane distance delta %f", float64(currentCarState.LaneLength) - currentDistanceTravelled)
 		mlog.Println("DEBUG: Distance is ", distanceDelta)
@@ -180,7 +234,7 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 		// Check if distance is enough in respect to speed
 		// It is not enough if the distanceDelta is lower than
 		// What the car would travel in 1.5 intervals
-		if distanceDelta < distanceInTimeStep {
+		if distanceDelta > -1 && distanceDelta < distanceInTimeStep {
 			return true
 		}
 	}
@@ -225,6 +279,18 @@ Simply drive on
  */
 func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("INFO: Drive ahead")
+
+	// here a reactivate has to happen if car is stopped
+	if crossingTileCarQueue.Len() == 0 {
+		for i := 0; i < crossingWaitingCarQueue.Len(); i++ {
+			var item = crossingWaitingCarQueue.Pop()
+			if item == carNo {
+				mlog.Println("INFO: Reactivating car from crossing waiting")
+				cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: strconv.Itoa(200)}
+				cmdCh <- cmd
+			}
+		}
+	}
 }
 
 /**
