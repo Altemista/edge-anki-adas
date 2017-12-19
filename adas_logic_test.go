@@ -165,8 +165,27 @@ func TestCalculatePosition(t *testing.T) {
 	}
 }
 
+func TestObstacle(t *testing.T) {
+	//If obstacle on road set timestamp, else delete timestamp
+	t.Log("TEST: Starting testObstacle")
+
+	//TODO: Calculation of position for obstacle needed x,y -> lane, tile is fixed
+
+	var track = getEmptyStatusArray()
+
+	//One car, obstacle on lane
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
+	track[4] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(),  CarNo: -1, TransitionTimestamp: time.Now(), PosTileNo: 2,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0}
+
+	if canDriveOn(0, track, nil) {
+		t.Fail()
+	}
+}
+
 func getEmptyStatusArray() []anki.Status {
-	return []anki.Status { getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus()};
+	return []anki.Status { getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus()}
 }
 
 func getEmptyStatus() anki.Status {

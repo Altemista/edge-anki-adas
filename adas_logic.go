@@ -37,10 +37,11 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 			anki.UpdateTrack(track, s)
 		case <-ticker.C:
 			// TODO: Migrate carNo to int and solve 0 vs 1 issue
-			for i, object := range track {
-				if object.CarID != "-1" {
+			for i := range track {
+				//Do we need that check?
+				//if object.CarID != "-1" {
 					driveCar(i, track, cmdCh)
-				}
+				//}
 			}
 		}
 	}
@@ -147,10 +148,10 @@ func timeStampsValid(carState anki.Status) bool {
 
 func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneNo int) bool {
 	var currentTimeDelta = time.Since(currentCarState.TransitionTimestamp).Seconds() * 1000
-	var currentDistanceTravelled = CalculateDistanceTravelled(currentCarState.CarSpeed, currentTimeDelta)
+	var currentDistanceTravelled = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), currentTimeDelta)
 	var otherTimeDelta = time.Since(otherCarState.TransitionTimestamp).Seconds() * 1000
-	var otherDistanceTravelled = CalculateDistanceTravelled(otherCarState.CarSpeed, otherTimeDelta)
-	var distanceInTimeStep = CalculateDistanceTravelled(currentCarState.CarSpeed*1.5, 200)
+	var otherDistanceTravelled = CalculateDistanceTravelled(float32(otherCarState.CarSpeed), otherTimeDelta)
+	var distanceInTimeStep = CalculateDistanceTravelled(float32(currentCarState.CarSpeed) * 1.5, 200)
 
 	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 

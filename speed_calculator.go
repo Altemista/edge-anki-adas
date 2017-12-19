@@ -21,7 +21,7 @@ package main
 
 const MM_PER_MS = 0.000935
 
-func CalculateDistanceTravelled(speed int, timeDelta float64) float64 {
+func CalculateDistanceTravelled(speed float32, timeDelta float64) float64 {
  	return MM_PER_MS * float64(speed) * timeDelta
 }
 
