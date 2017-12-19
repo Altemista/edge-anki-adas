@@ -1,10 +1,9 @@
 package: edge-anki-adas
 import:
-- package: github.com/Shopify/sarama
-  version: ^1.14.0
-- package: github.com/okoeth/edge-anki-base
+- package: github.com/golang-collections/collections
   subpackages:
-  - anki
+  - stack
+- package: github.com/okoeth/edge-anki-base
 - package: github.com/okoeth/muxlogger
 - package: github.com/rs/cors
   version: ^1.2.0
@@ -12,6 +11,3 @@ import:
   version: ^2.0.0
   subpackages:
   - pat
-- package: github.com/golang-collections/collections
-  subpackages:
-  - stack
