@@ -150,7 +150,7 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 	var currentDistanceTravelled = CalculateDistanceTravelled(currentCarState.CarSpeed, currentTimeDelta)
 	var otherTimeDelta = time.Since(otherCarState.TransitionTimestamp).Seconds() * 1000
 	var otherDistanceTravelled = CalculateDistanceTravelled(otherCarState.CarSpeed, otherTimeDelta)
-	var distanceInTimeStep = CalculateDistanceTravelled(currentCarState.CarSpeed, 200)
+	var distanceInTimeStep = CalculateDistanceTravelled(currentCarState.CarSpeed*1.5, 200)
 
 	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
@@ -170,12 +170,16 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 				(float64(currentCarState.LaneLength) - currentDistanceTravelled)
 		}
 
+		mlog.Printf("DEBUG: Car pos: tile %d, pos: %f", currentCarState.PosTileNo, currentDistanceTravelled)
+		mlog.Printf("DEBUG: Car pos other: tile %d, pos: %f", otherCarState.PosTileNo, otherDistanceTravelled)
+		mlog.Printf("DEBUG: Lane length %d", currentCarState.LaneLength)
+		mlog.Printf("DEBUG: lane distance delta %f", float64(currentCarState.LaneLength) - currentDistanceTravelled)
 		mlog.Println("DEBUG: Distance is ", distanceDelta)
 
 		// Check if distance is enough in respect to speed
 		// It is not enough if the distanceDelta is lower than
 		// What the car would travel in 1.5 intervals
-		if distanceDelta < distanceInTimeStep*1.5 {
+		if distanceDelta < distanceInTimeStep {
 			return true
 		}
 	}
