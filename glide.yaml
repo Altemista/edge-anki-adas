@@ -3,6 +3,7 @@ import:
 - package: github.com/golang-collections/collections
   subpackages:
   - stack
+  - tree/master/queue
 - package: github.com/okoeth/edge-anki-base
 - package: github.com/okoeth/muxlogger
 - package: github.com/rs/cors

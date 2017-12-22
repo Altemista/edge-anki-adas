@@ -21,15 +21,12 @@ package main
 
 import (
 	"time"
-
-	anki "github.com/okoeth/edge-anki-base"
 	"strconv"
-	stack "github.com/golang-collections/collections/stack"
 	"math"
+	anki "github.com/okoeth/edge-anki-base"
 )
 
-var crossingTileCarQueue stack.Stack
-var crossingWaitingCarQueue stack.Stack
+var crossing = Crossing {Tile1No: 0, Tile2No: 4}
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
 	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
@@ -74,7 +71,7 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	var currentCarState = getStateForCarNo(carNo, track)
 	if messageWithIntegrity(currentCarState) {
 		mlog.Printf("CarNo %d", carNo)
-		if canDriveCrossing(carNo, track, 10) {
+		if canDriveCrossing(carNo, track, &crossing) {
 			if canDriveOn(carNo, track, cmdCh) {
 				driveAhead(carNo, track, cmdCh)
 			} else {
@@ -99,28 +96,6 @@ func messageWithIntegrity(currentCarState anki.Status) bool {
 			return true
 	}
 	return false
-}
-
-func canDriveCrossing(carNo int, track []anki.Status, crossingTileNo int) bool {
-	var currentCarState = getStateForCarNo(carNo, track)
-
-	//Check if last tile was crossing
-	if (currentCarState.PosTileNo-1) % currentCarState.MaxTileNo == crossingTileNo {
-		crossingTileCarQueue.Pop()
-	}
-
-	//Check if next tile is crossing
-	if (currentCarState.PosTileNo+1)%currentCarState.MaxTileNo == crossingTileNo {
-		if crossingTileCarQueue.Len() > 0 {
-			crossingWaitingCarQueue.Push(currentCarState.CarNo)
-			mlog.Println("WARNING: Can not pass crossing")
-			return false
-		} else {
-			crossingTileCarQueue.Push(currentCarState.CarNo)
-		}
-	}
-	mlog.Println("DEBUG: Can pass crossing")
-	return true
 }
 
 func stopCar(carNo int, cmdCh chan anki.Command) {
@@ -212,7 +187,7 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 
 		//1. Check if cars are on same tiles
 		if otherCarState.PosTileNo == currentCarState.PosTileNo &&
-			currentDistanceTravelled < otherDistanceTravelled {
+			math.Floor(currentDistanceTravelled) <= math.Floor(otherDistanceTravelled) {
 			distanceDelta = otherDistanceTravelled - currentDistanceTravelled
 		} else if otherCarState.PosTileNo == nextTileNo {
 			//2. Check if other car is on next tile
@@ -280,16 +255,15 @@ Simply drive on
 func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("INFO: Drive ahead")
 
+	mlog.Printf("CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)
+	mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CrossingTileCarQueue)
+
 	// here a reactivate has to happen if car is stopped
-	if crossingTileCarQueue.Len() == 0 {
-		for i := 0; i < crossingWaitingCarQueue.Len(); i++ {
-			var item = crossingWaitingCarQueue.Pop()
-			if item == carNo {
-				mlog.Println("INFO: Reactivating car from crossing waiting")
-				cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: strconv.Itoa(200)}
-				cmdCh <- cmd
-			}
-		}
+	if crossing.CrossingWaitingCarQueue.Peek() == carNo {
+		crossing.CrossingWaitingCarQueue.Dequeue()
+		mlog.Println("INFO: Reactivating car from crossing waiting")
+		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(300)}
+		cmdCh <- cmd
 	}
 }
 

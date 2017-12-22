@@ -33,8 +33,8 @@ func TestCanDriveOn(t *testing.T) {
 
 	//Two cars, same lane, same tiles, enough distance
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-	PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 250}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-400 * time.Millisecond),
+	PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 200}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-1100 * time.Millisecond),
 	PosTileNo: 2, PosLocation: 1, LaneNo: 2, MaxTileNo: 6, CarSpeed: 200}
 
 	if !canDriveOn(0, track, nil) {
@@ -53,6 +53,8 @@ func TestCanDriveOn(t *testing.T) {
 }
 
 func TestGetAvailableLane(t *testing.T) {
+
+	//TODO: Change always two lanes?
 	t.Log("TEST: Starting testGetAvailableLane")
 
 	var track = getEmptyStatusArray()
@@ -176,7 +178,7 @@ func TestObstacle(t *testing.T) {
 	//One car, obstacle on lane
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
 		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
-	track[4] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(),  CarNo: -1, TransitionTimestamp: time.Now(), PosTileNo: 2,
+	track[4] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), CarNo: -1, TransitionTimestamp: time.Now(), PosTileNo: 2,
 		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0}
 
 	if canDriveOn(0, track, nil) {
@@ -186,51 +188,97 @@ func TestObstacle(t *testing.T) {
 
 func TestCrossing(t *testing.T) {
 	t.Log("TEST: Starting testCrossing")
+	crossing := Crossing{Tile1No: 3, Tile2No: 6}
 
 	//Crossing has tileNo 3
 	var track = getEmptyStatusArray()
 
 	//Car one is before crossing
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
 	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 1,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
 
-	if !canDriveCrossing(0, track, 3) {
+	if !canDriveCrossing(0, track, &crossing) {
 		t.Fail()
 	}
 
-	if !canDriveCrossing(1, track, 3) {
+	if !canDriveCrossing(1, track, &crossing) {
 		t.Fail()
 	}
 
 	//Car one is now on crossing, car two should be in waiting queue
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250, CarNo: 1}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
 
-	if !canDriveCrossing(0, track, 3) {
+	if !canDriveCrossing(0, track, &crossing) {
 		t.Fail()
 	}
 
-	if canDriveCrossing(1, track, 3) {
+	if canDriveCrossing(1, track, &crossing) {
+		t.Fail()
+	}
+
+	//Car one is still on crossing, car two should be in waiting queue
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+
+	if !canDriveCrossing(0, track, &crossing) {
+		t.Fail()
+	}
+
+	if canDriveCrossing(1, track, &crossing) {
 		t.Fail()
 	}
 
 	//Car one is not anymore on crossing, car two should now be on crossing
 	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 4,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250, CarNo: 1}
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
-		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
 
-	if !canDriveCrossing(0, track, 3) {
+	if !canDriveCrossing(0, track, &crossing) {
 		t.Fail()
 	}
 
-	if !canDriveCrossing(1, track, 3) {
+	if !canDriveCrossing(1, track, &crossing) {
 		t.Fail()
 	}
+
+	//driveAhead(2, track, nil)
+
+	//Move car two from crossing, so that crossing is free
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 4,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+
+	if !canDriveCrossing(0, track, &crossing) {
+		t.Fail()
+	}
+
+	if !canDriveCrossing(1, track, &crossing) {
+		t.Fail()
+	}
+
+	//Car 1 on crossing, car 2 wants to go on crossing from other side
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 1}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 6,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 0, CarNo: 2}
+
+	if !canDriveCrossing(0, track, &crossing) {
+		t.Fail()
+	}
+
+	if canDriveCrossing(1, track, &crossing) {
+		t.Fail()
+	}
+
 }
 
 func getEmptyStatusArray() []anki.Status {
