@@ -25,7 +25,11 @@ func NewCrossing(tile1No int, tile2No int) Crossing {
 func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 	var currentCarState = getStateForCarNo(carNo, track)
 	var lastTileNo= (currentCarState.PosTileNo - 1) % currentCarState.MaxTileNo
-	//var nextTileNo = (currentCarState.PosTileNo+1)%currentCarState.MaxTileNo
+	var nextTileNo = (currentCarState.PosTileNo + 1)%currentCarState.MaxTileNo
+
+	var currentDistanceTravelled = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), getTimeDelta(currentCarState.TransitionTimestamp))
+	var distanceToCrossing = getRemainingTileDistance(currentCarState.LaneLength, currentDistanceTravelled)
+	var distanceInTimeStep = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), 300)
 
 	//Check if last tile was crossing
 	if lastTileNo == crossing.Tile1No || lastTileNo == crossing.Tile2No {
@@ -33,8 +37,9 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 	}
 
 	//Check if the car is currently on the crossing tile
-	//And if it is already on the crosssing (drive on)
-	if isCarOnCrossingTile(currentCarState.PosTileNo, crossing) &&
+	//And if it is already on the crossing (drive on)
+	if (isCarCloseToCrossingTile(nextTileNo, crossing, distanceToCrossing, distanceInTimeStep) ||
+		isCarOnCrossingTile(currentCarState.PosTileNo, crossing)) &&
 		!isCarActiveOnCrossing(currentCarState.CarNo, crossing) {
 
 		if len(crossing.CarsOnCrossing) > 0 &&
@@ -69,6 +74,17 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 func isCarOnCrossingTile(posTileNo int, crossing *Crossing) bool {
 	return posTileNo == crossing.Tile1No ||
 		posTileNo== crossing.Tile2No
+}
+
+func isCarCloseToCrossingTile(nextTileNo int, crossing *Crossing,
+	distanceToCrossing float64, distanceInTimeStep float64) bool {
+	if nextTileNo == crossing.Tile1No ||
+		nextTileNo == crossing.Tile2No {
+			if distanceToCrossing < distanceInTimeStep {
+				return true
+			}
+	}
+	return false
 }
 
 func isCarActiveOnCrossing(carNo int, crossing *Crossing) bool {

@@ -432,6 +432,52 @@ func TestCrossing(t *testing.T) {
 	}
 }
 
+func TestCloseToCrossing(t *testing.T) {
+	t.Log("TEST: Starting testCrossing")
+	crossing := NewCrossing(3, 6)
+
+	//Crossing has tileNo 3
+	var track= getEmptyStatusArray()
+
+	//Car 1 on crossing,
+	//Car 2 is one tile before crossing and wants to go on crossing from other side
+	//Car 2 is far enough (can drive on)
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 0}
+
+	if !canDriveCrossing(0, track, &crossing) {
+		t.FailNow()
+	}
+
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-100 * time.Millisecond), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 800, CarNo: 1}
+
+	if !canDriveCrossing(1, track, &crossing) {
+		t.FailNow()
+	}
+
+	//Car 1 on crossing,
+	//Car 2 is one tile before crossing and wants to go on crossing from other side
+	//Car 2 is a bit away but very fast (has to break earlier)
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 3,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 250, CarNo: 0}
+
+	if !canDriveCrossing(0, track, &crossing) {
+		t.FailNow()
+	}
+
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-200 * time.Millisecond), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 800, CarNo: 1}
+
+	if canDriveCrossing(1, track, &crossing) {
+		t.FailNow()
+	}
+
+	if crossing.CrossingWaitingCarQueue.Len() != 1 || len(crossing.CarsOnCrossing) != 1 {
+		t.FailNow()
+	}
+}
+
 func getEmptyStatusArray() []anki.Status {
 	return []anki.Status { getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus()}
 }
