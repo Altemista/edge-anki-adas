@@ -1,7 +1,7 @@
 package main
 
 import(
-	queue "github.com/golang-collections/collections/queue"
+	"container/list"
 	anki "github.com/okoeth/edge-anki-base"
 )
 
@@ -10,37 +10,101 @@ type (
 	Crossing struct {
 		Tile1No int
 		Tile2No int
-		CrossingTileCarQueue queue.Queue
-		CrossingWaitingCarQueue queue.Queue
+		CarsOnCrossing map[int]CarActionState
+		CrossingWaitingCarQueue *list.List
 	}
 )
 
+func NewCrossing(tile1No int, tile2No int) Crossing {
+	return Crossing { Tile1No: tile1No,
+	Tile2No: tile2No,
+	CarsOnCrossing: make(map[int]CarActionState),
+	CrossingWaitingCarQueue: list.New() }
+}
+
 func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
-	var currentCarState= getStateForCarNo(carNo, track)
+	var currentCarState = getStateForCarNo(carNo, track)
 	var lastTileNo= (currentCarState.PosTileNo - 1) % currentCarState.MaxTileNo
 	//var nextTileNo = (currentCarState.PosTileNo+1)%currentCarState.MaxTileNo
 
 	//Check if last tile was crossing
 	if lastTileNo == crossing.Tile1No || lastTileNo == crossing.Tile2No {
-		crossing.CrossingTileCarQueue.Dequeue()
+		delete(crossing.CarsOnCrossing, currentCarState.CarNo)
 	}
 
-	//Check if current tile is crossing
-	if (currentCarState.PosTileNo == crossing.Tile1No || currentCarState.PosTileNo == crossing.Tile2No) &&
-		crossing.CrossingTileCarQueue.Peek() != currentCarState.CarNo {
-		if crossing.CrossingTileCarQueue.Len() > 0 {
-			if crossing.CrossingWaitingCarQueue.Peek() != currentCarState.CarNo {
-				crossing.CrossingWaitingCarQueue.Enqueue(currentCarState.CarNo)
+	//Check if the car is currently on the crossing tile
+	//And if it is already on the crosssing (drive on)
+	if isCarOnCrossingTile(currentCarState.PosTileNo, crossing) &&
+		!isCarActiveOnCrossing(currentCarState.CarNo, crossing) {
+
+		if len(crossing.CarsOnCrossing) > 0 &&
+			!isCarGoingInSameDirectionAsActiveCar(currentCarState.PosTileNo, crossing)  {
+
+			//Check if car is already waiting
+			if _, inQueue := getCarFromWaitingQueue(carNo, crossing); !inQueue{
+
+				crossing.CrossingWaitingCarQueue.PushBack(
+					CarActionState{CarNo: carNo,
+					Lane: currentCarState.LaneNo,
+					Speed: currentCarState.CarSpeed })
 			}
+
 			mlog.Println("WARNING: Can not pass crossing")
 			mlog.Printf("CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)
-			mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CrossingTileCarQueue)
+			mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CarsOnCrossing)
 			return false
 		} else {
-			crossing.CrossingTileCarQueue.Enqueue(currentCarState.CarNo)
+			crossing.CarsOnCrossing[carNo] =
+				CarActionState{CarNo: carNo,
+					Lane: currentCarState.LaneNo,
+					Speed: currentCarState.CarSpeed,
+					PosTileNo: currentCarState.PosTileNo}
 		}
 	}
 
 	mlog.Println("DEBUG: Can pass crossing")
 	return true
+}
+
+func isCarOnCrossingTile(posTileNo int, crossing *Crossing) bool {
+	return posTileNo == crossing.Tile1No ||
+		posTileNo== crossing.Tile2No
+}
+
+func isCarActiveOnCrossing(carNo int, crossing *Crossing) bool {
+	_, carActiveOnCrossing := crossing.CarsOnCrossing[carNo]
+	return carActiveOnCrossing
+}
+
+func isCarGoingInSameDirectionAsActiveCar(posTileNo int, crossing *Crossing) bool {
+	currentCrossingDirection := getTileOfFirstCarOnCrossing(crossing)
+	return posTileNo == currentCrossingDirection
+}
+
+func getTileOfFirstCarOnCrossing(crossing *Crossing) int {
+	for _, value := range crossing.CarsOnCrossing {
+		return value.PosTileNo
+	}
+	return -1
+}
+
+func getCarFromWaitingQueue(carNo int, crossing *Crossing) (*list.Element, bool) {
+	// Iterate through list and print its contents.
+	for listElement := crossing.CrossingWaitingCarQueue.Front();
+		listElement != nil; listElement = listElement.Next() {
+		if listElement.Value.(CarActionState).CarNo == carNo {
+			return listElement, true
+		}
+	}
+	return nil, false
+}
+
+func tryRemoveCarFromQueue(carNo int, crossing *Crossing) (CarActionState, bool) {
+	// here a reactivate has to happen if car is stopped
+	if listElement, inQueue := getCarFromWaitingQueue(carNo, crossing); inQueue {
+		crossing.CrossingWaitingCarQueue.Remove(listElement)
+		stoppedCarState := listElement.Value.(CarActionState)
+		return stoppedCarState, true
+	}
+	return CarActionState{}, false
 }

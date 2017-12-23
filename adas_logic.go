@@ -24,9 +24,11 @@ import (
 	"strconv"
 	"math"
 	anki "github.com/okoeth/edge-anki-base"
+	"sync"
 )
 
-var crossing = Crossing {Tile1No: 0, Tile2No: 4}
+var lock sync.Mutex
+var crossing = NewCrossing(0, 4)
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
 	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
@@ -66,6 +68,10 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	//	Try left (lane)
 	//	Try right (lane)
 	//If no change possible, adjust speed
+
+	//Lock to secure crossing calculation
+	lock.Lock()
+	defer lock.Unlock()
 
 	//TODO: Iterative (recursive?) approach to find most left lane etc.
 	var currentCarState = getStateForCarNo(carNo, track)
@@ -256,13 +262,12 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("INFO: Drive ahead")
 
 	mlog.Printf("CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)
-	mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CrossingTileCarQueue)
+	mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CarsOnCrossing)
 
 	// here a reactivate has to happen if car is stopped
-	if crossing.CrossingWaitingCarQueue.Peek() == carNo {
-		crossing.CrossingWaitingCarQueue.Dequeue()
+	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, &crossing); inQueue {
 		mlog.Println("INFO: Reactivating car from crossing waiting")
-		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(300)}
+		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
 		cmdCh <- cmd
 	}
 }
