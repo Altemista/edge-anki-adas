@@ -28,7 +28,7 @@ import (
 )
 
 var lock sync.Mutex
-var crossing = NewCrossing(0, 4)
+var crossing = NewCrossing(3, 7)
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
 	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
@@ -41,11 +41,25 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 			anki.UpdateTrack(track, s)
 		case <-ticker.C:
 			// TODO: Migrate carNo to int and solve 0 vs 1 issue
-			for i := range track {
-				//Do we need that check?
-				//if object.CarID != "-1" {
+
+			// Update tile ids for obstacle
+			for i, car := range track {
+				//-1 and -2 are obstacle
+				if car.CarNo == -1 {
+					track[i].PosTileNo = crossing.Tile1No
+					track[i].TransitionTimestamp = car.MsgTimestamp
+				} else if car.CarNo == -2 {
+					track[i].PosTileNo = crossing.Tile2No
+					track[i].TransitionTimestamp = car.MsgTimestamp
+				}
+			}
+
+			// Drive cars
+			for i, car := range track {
+				//-1 and -2 are obstacle
+				if car.CarNo != -1 && car.CarNo != -2 {
 					driveCar(i, track, cmdCh)
-				//}
+				}
 			}
 		}
 	}
@@ -255,7 +269,7 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 
 	// here a reactivate has to happen if car is stopped
 	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, &crossing); inQueue {
-		mlog.Println("INFO: Reactivating car from crossing waiting")
+		mlog.Printf("DEBUG: Reactivating car from crossing waiting with speed %d\n", carActionState.Speed)
 		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
 		cmdCh <- cmd
 	}

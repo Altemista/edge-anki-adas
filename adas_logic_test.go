@@ -184,6 +184,16 @@ func TestObstacle(t *testing.T) {
 	if canDriveOn(0, track, nil) {
 		t.FailNow()
 	}
+
+	//One car, obstacle on other lane
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
+	track[5] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), CarNo: -2, TransitionTimestamp: time.Now(), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 0}
+
+	if canDriveOn(0, track, nil) {
+		t.FailNow()
+	}
 }
 
 func TestCrossing(t *testing.T) {
@@ -466,7 +476,7 @@ func TestCloseToCrossing(t *testing.T) {
 		t.FailNow()
 	}
 
-	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-200 * time.Millisecond), PosTileNo: 5,
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now().Add(-800 * time.Millisecond), PosTileNo: 5,
 		PosLocation: 1, LaneNo: 2, MaxTileNo: 8, LaneLength: 800, CarSpeed: 800, CarNo: 1}
 
 	if canDriveCrossing(1, track, &crossing) {
@@ -479,7 +489,7 @@ func TestCloseToCrossing(t *testing.T) {
 }
 
 func getEmptyStatusArray() []anki.Status {
-	return []anki.Status { getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus()}
+	return []anki.Status { getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus(), getEmptyStatus()}
 }
 
 func getEmptyStatus() anki.Status {
