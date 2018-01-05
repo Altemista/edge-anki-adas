@@ -49,6 +49,8 @@ func main() {
 	// Go and drive cars on track
 	go driveCars(track, cmdCh, statusCh)
 
+	statusCh <- anki.Status{}
+
 	// Set-up routes
 	mux := goji.NewMux()
 	tc := NewAdasController(track, cmdCh)
