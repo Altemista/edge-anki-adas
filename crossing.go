@@ -35,11 +35,14 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 
 	var currentDistanceTravelled = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), getTimeDelta(currentCarState.TransitionTimestamp))
 	var distanceToCrossing = getRemainingTileDistance(currentCarState.LaneLength, currentDistanceTravelled)
-	var distanceInTimeStep = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), 500)
+	var distanceInTimeStep = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), 600)
 
+	mlog.Printf("DEBUG: current tile %d", currentCarState.PosTileNo)
 	mlog.Printf("DEBUG: last tile %d", lastTileNo)
 	mlog.Printf("DEBUG: next tile %d", nextTileNo)
 	mlog.Printf("DEBUG: Distance to crossing %f", distanceToCrossing)
+	mlog.Printf("DEBUG: Speed %d", currentCarState.CarSpeed)
+	mlog.Printf("DEBUG: Distance in timestep %f", distanceInTimeStep)
 
 	//Check if last tile was crossing
 	if lastTileNo == crossing.Tile1No || lastTileNo == crossing.Tile2No {
@@ -54,10 +57,10 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 		}
 	}
 
-	//Check if the car is currently on the crossing tile
-	//And if it is already on the crossing (drive on)
+	//Check if the car is currently on the crossing tile or close or already waiting (braking)
 	if (isCarCloseToCrossingTile(nextTileNo, crossing, distanceToCrossing, distanceInTimeStep) ||
-		isCarOnCrossingTile(currentCarState.PosTileNo, crossing)) &&
+		isCarOnCrossingTile(currentCarState.PosTileNo, crossing) ||
+		isCarInWaitingQueue(currentCarState.CarNo, crossing)) &&
 		!isCarActiveOnCrossing(currentCarState.CarNo, crossing) {
 
 		if len(crossing.CarsOnCrossing) > 0 &&
@@ -66,7 +69,6 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 
 			//Check if car is already waiting
 			if _, inQueue := getCarFromWaitingQueue(carNo, crossing); !inQueue{
-
 				crossing.CrossingWaitingCarQueue.PushBack(
 					CarActionState{
 						Timestamp: time.Now(),
@@ -76,16 +78,38 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 			}
 
 			mlog.Println("WARNING: Can not pass crossing")
+			mlog.Printf("DEBUG: Speed: %d\n", currentCarState.CarSpeed)
 			mlog.Printf("DEBUG: CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)
 			mlog.Printf("DEBUG: CrossingTileCarQueue: %+v\n", crossing.CarsOnCrossing)
 			return false
-		} else if isCarOnCrossingTile(currentCarState.PosTileNo, crossing) {
-			crossing.CarsOnCrossing[carNo] =
-				CarActionState{CarNo: carNo,
-					Timestamp: time.Now(),
-					Lane: currentCarState.LaneNo,
-					Speed: currentCarState.CarSpeed,
-					PosTileNo: currentCarState.PosTileNo}
+		} else {
+			var crossingNo = -1
+
+			if isCarOnCrossingTile(currentCarState.PosTileNo, crossing) {
+				crossingNo = currentCarState.PosTileNo
+			} else {
+				//Search forward for the next crossing tile id
+				for i := 1; i < 4; i++ {
+					nextSearchTileNo := (currentCarState.PosTileNo + i) % currentCarState.MaxTileNo
+					if nextSearchTileNo == crossing.Tile1No {
+						crossingNo = crossing.Tile1No
+						break
+					} else if nextSearchTileNo == crossing.Tile2No {
+						crossingNo = crossing.Tile2No
+						break
+					}
+				}
+			}
+
+			if crossingNo != -1 {
+				mlog.Println("DEBUG: Adding car to cars on crossing")
+				crossing.CarsOnCrossing[carNo] =
+					CarActionState{CarNo: carNo,
+						Timestamp: time.Now(),
+						Lane: currentCarState.LaneNo,
+						Speed: currentCarState.CarSpeed,
+						PosTileNo: crossingNo}
+			}
 		}
 	}
 
@@ -94,8 +118,20 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 }
 
 func isCarOnCrossingTile(posTileNo int, crossing *Crossing) bool {
-	return posTileNo == crossing.Tile1No ||
-		posTileNo== crossing.Tile2No
+	if posTileNo == crossing.Tile1No ||
+		posTileNo == crossing.Tile2No {
+			mlog.Println("DEBUG: Car is on crossing tile")
+			return true
+	}
+	return false
+}
+
+func isCarInWaitingQueue(carNo int, crossing *Crossing) bool {
+	if _, inQueue := getCarFromWaitingQueue(carNo, crossing); inQueue {
+		mlog.Println("DEBUG: Car is already in waiting queue")
+		return true
+	}
+	return false
 }
 
 func isCarCloseToCrossingTile(nextTileNo int, crossing *Crossing,
@@ -103,6 +139,7 @@ func isCarCloseToCrossingTile(nextTileNo int, crossing *Crossing,
 	if nextTileNo == crossing.Tile1No ||
 		nextTileNo == crossing.Tile2No {
 			if distanceToCrossing < distanceInTimeStep {
+				mlog.Println("DEBUG: Car is close to crossing tile")
 				return true
 			}
 	}
@@ -111,12 +148,20 @@ func isCarCloseToCrossingTile(nextTileNo int, crossing *Crossing,
 
 func isCarActiveOnCrossing(carNo int, crossing *Crossing) bool {
 	_, carActiveOnCrossing := crossing.CarsOnCrossing[carNo]
-	return carActiveOnCrossing
+	if carActiveOnCrossing {
+		mlog.Println("DEBUG: Car is already active on crossing")
+		return true
+	}
+	return false
 }
 
 func isCarGoingInSameDirectionAsActiveCar(posTileNo int, crossing *Crossing) bool {
 	currentCrossingDirection := getTileOfFirstCarOnCrossing(crossing)
-	return posTileNo == currentCrossingDirection
+	if posTileNo == currentCrossingDirection {
+		mlog.Println("DEBUG: Car is going in same direction as active car")
+		return true
+	}
+	return false
 }
 
 func getTileOfFirstCarOnCrossing(crossing *Crossing) int {

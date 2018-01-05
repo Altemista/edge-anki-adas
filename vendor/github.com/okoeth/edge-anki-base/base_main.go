@@ -49,7 +49,7 @@ func CreateTrack() []Status {
 
 // UpdateTrack merges a new status update in the track
 func UpdateTrack(track []Status, update Status) {
-	plog.Printf("INFO: Updating track from status update")
+	plog.Printf("INFO: Updating track from status update with latency %f ms", time.Since(update.MsgTimestamp).Seconds()*1000)
 	if update.CarNo == 0 {
 		track[0].MergeStatusUpdate(update)
 	} else if update.CarNo == 1 {
@@ -98,16 +98,19 @@ func sendCommand(p sarama.AsyncProducer, ch chan Command) {
 		cmd = <-ch
 		plog.Printf("INFO: Received command")
 		cmdstr, err := cmd.ControllerString()
+		plog.Printf("INFO: Sending command %s to topic %s", cmdstr, "Command" + strconv.Itoa(cmd.CarNo))
 		if err != nil {
 			plog.Println("WARNING: Ignoring command due to decoding error")
 			continue
 		}
-		p.Input() <- &sarama.ProducerMessage{
+
+		producerMessage := &sarama.ProducerMessage{
 			Value:     sarama.StringEncoder(cmdstr),
 			Topic:     "Command" + strconv.Itoa(cmd.CarNo),
 			Partition: 0,
-			Timestamp: time.Now(),
 		}
+
+		p.Input() <- producerMessage
 
 	}
 }

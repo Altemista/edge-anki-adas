@@ -100,6 +100,7 @@ func messageWithIntegrity(currentCarState anki.Status) bool {
 }
 
 func stopCar(carNo int, cmdCh chan anki.Command) {
+	mlog.Printf("DEBUG: Stopping car")
 	cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: strconv.Itoa(0)}
 	cmdCh <- cmd
 }
@@ -196,7 +197,8 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 
 		//1. Check if cars are on same tiles
 		if otherCarState.PosTileNo == currentCarState.PosTileNo &&
-			math.Floor(currentDistanceTravelled) <= math.Floor(otherDistanceTravelled) {
+			(math.Floor(currentDistanceTravelled) <= math.Floor(otherDistanceTravelled) ||
+				currentTimeDelta < otherTimeDelta) {
 			distanceDelta = otherDistanceTravelled - currentDistanceTravelled
 		} else if otherCarState.PosTileNo == nextTileNo {
 			//2. Check if other car is on next tile
