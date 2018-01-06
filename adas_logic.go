@@ -42,6 +42,9 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 		case <-ticker.C:
 			// TODO: Migrate carNo to int and solve 0 vs 1 issue
 
+			logicBegin := time.Now()
+			mlog.Println("INFO: Logic begin")
+
 			// Update tile ids for obstacle
 			for i, car := range track {
 				//-1 and -2 are obstacle
@@ -61,17 +64,19 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 					driveCar(i, track, cmdCh)
 				}
 			}
+
+			mlog.Printf("INFO: Logic ended after %f ms", time.Since(logicBegin).Seconds()*1000)
 		}
 	}
 }
 
 func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
-	lock.Lock()
-	defer lock.Unlock()
+	//lock.Lock()
+	//defer lock.Unlock()
 
 	var currentCarState = getStateForCarNo(carNo, track)
 	if messageWithIntegrity(currentCarState) {
-		mlog.Printf("CarNo %d", carNo)
+		mlog.Printf("CarNo %d, %+v", carNo, currentCarState)
 		if canDriveCrossing(carNo, track, &crossing) {
 			if canDriveOn(carNo, track, cmdCh) {
 				driveAhead(carNo, track, cmdCh)
