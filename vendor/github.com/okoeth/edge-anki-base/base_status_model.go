@@ -19,29 +19,32 @@
 
 package anki
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type (
 	// Status represents a status update message from the Anki Overdrive controller
 	Status struct {
-		MsgID           int         `json:"msgID"`
-		MsgName         string      `json:"msgName"`
-		MsgTimestamp    time.Time   `json:"msgTimestamp"`
-		CarNo           int         `json:"carNo"`
-		CarID           string      `json:"carID"`
-		CarSpeed        int         `json:"carSpeed"`
-		CarVersion      int         `json:"carVersion"`
-		CarBatteryLevel int         `json:"carBatteryLevel"`
-		LaneOffset      float32     `json:"laneOffset"`
-		LaneNo          int         `json:"laneNo"`
-		LaneLength      int         `json:"laneLength"`
-		LaneTimestamp   time.Time   `json:"laneTimestamp"`
-		PosTileType     string      `json:"posTileType"`
-		PosTileNo       int         `json:"posTileNo"`
-		PosLocation     int         `json:"posLocation"`
-		PosTimestamp    time.Time   `json:"posTimestamp"`
-		PosOptions      []PosOption `json:"posOptions"`
-		MaxTileNo	    int 		`json:"maxTileNo"`
+		MsgID               int         `json:"msgID"`
+		MsgName             string      `json:"msgName"`
+		MsgTimestamp        time.Time   `json:"msgTimestamp"`
+		CarNo               int         `json:"carNo"`
+		CarID               string      `json:"carID"`
+		CarSpeed            int         `json:"carSpeed"`
+		CarVersion          int         `json:"carVersion"`
+		CarBatteryLevel     int         `json:"carBatteryLevel"`
+		LaneOffset          float32     `json:"laneOffset"`
+		LaneNo              int         `json:"laneNo"`
+		LaneLength          int         `json:"laneLength"`
+		LaneTimestamp       time.Time   `json:"laneTimestamp"`
+		PosTileType         string      `json:"posTileType"`
+		PosTileNo           int         `json:"posTileNo"`
+		PosLocation         int         `json:"posLocation"`
+		PosTimestamp        time.Time   `json:"posTimestamp"`
+		PosOptions          []PosOption `json:"posOptions"`
+		MaxTileNo           int         `json:"maxTileNo"`
 		TransitionTimestamp time.Time
 	}
 	// PosOption lists an option for a position
@@ -51,8 +54,15 @@ type (
 	}
 )
 
+// Identify returns a semi.unique ID
+func (s Status) Identify() string {
+	return fmt.Sprintf("%v", s.MsgTimestamp.UnixNano())
+}
+
 // MergeStatusUpdate updates fields as per message type 2
 func (s *Status) MergeStatusUpdate(u Status) {
+	defer Track_execution_time(Start_execution_time("MergeStatusUpdate"))
+
 	if u.MsgID == 23 {
 		// No update, just a ping
 	} else if u.MsgID == 25 {
@@ -75,24 +85,10 @@ func (s *Status) MergeStatusUpdate(u Status) {
 		s.PosTimestamp = u.MsgTimestamp
 		s.MsgTimestamp = u.MsgTimestamp
 		s.MaxTileNo = u.MaxTileNo
+		s.TransitionTimestamp = u.MsgTimestamp
+		s.findTileNo(u)
 	} else if u.MsgID == 41 {
 		// Transition update
-		/*s.LaneOffset = u.LaneOffset
-		s.LaneNo = u.LaneNo
-		s.LaneLength = u.LaneLength
-		/*
-				s.PosTileType = u.PosTileType
-				s.PosTileNo = u.PosTileNo
-				s.PosLocation = u.PosLocation
-				s.PosOptions = u.PosOptions
-				s.PosTimestamp = u.MsgTimestamp
-			s.findTileNo(u)
-		*/
-		/*s.LaneTimestamp = u.MsgTimestamp
-		s.MsgTimestamp = u.MsgTimestamp
-		s.TransitionTimestamp = u.MsgTimestamp
-		s.MaxTileNo = u.MaxTileNo*/
-
 		s.CarSpeed = u.CarSpeed
 		s.LaneOffset = u.LaneOffset
 		s.LaneNo = u.LaneNo

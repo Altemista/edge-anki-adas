@@ -22,13 +22,16 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	anki "github.com/okoeth/edge-anki-base"
+	"net/http"
+	"goji.io/pat"
 	"github.com/rs/cors"
 	"goji.io"
-	"goji.io/pat"
+	"io/ioutil"
+	"fmt"
 )
 
 // Logging
@@ -39,24 +42,41 @@ func init() {
 }
 
 func main() {
+	// Set-up routes
+	mux := goji.NewMux()
+
+	track := anki.CreateTrack()
+
 	// Set-up channels for status and commands
-	cmdCh, statusCh, err := anki.CreateChannels("edge.adas")
+	cmdCh, statusCh, err := anki.CreateChannels("edge.adas", mux, &track)
 	if err != nil {
 		mlog.Fatalln("FATAL: Could not establish channels: %s", err)
 	}
-	track := anki.CreateTrack()
 
 	// Go and drive cars on track
 	go driveCars(track, cmdCh, statusCh)
 
-	statusCh <- anki.Status{}
+	//statusCh <- anki.Status{}
 
-	// Set-up routes
-	mux := goji.NewMux()
 	tc := NewAdasController(track, cmdCh)
 	tc.AddHandlers(mux)
 	mux.Handle(pat.Get("/html/*"), http.FileServer(http.Dir("html/dist/")))
 	corsHandler := cors.Default().Handler(mux)
+
+
+	indexFile, err := os.Open("index.html")
+	if err != nil {
+		mlog.Println(err)
+	}
+	index, err := ioutil.ReadAll(indexFile)
+	if err != nil {
+		mlog.Println(err)
+	}
+
+	mux.HandleFunc(pat.Get("/"), func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, string(index))
+	})
+
 	mlog.Println("INFO: System is ready.")
 	http.ListenAndServe("0.0.0.0:8003", corsHandler)
 }

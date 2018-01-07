@@ -24,6 +24,13 @@ func NewCrossing(tile1No int, tile2No int) Crossing {
 }
 
 func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
+	defer anki.Track_execution_time(anki.Start_execution_time("canDriveCrossing"))
+
+	lockTime := time.Now()
+	lock.Lock()
+	defer lock.Unlock()
+	mlog.Printf("INFO: ======= Waited at canDriveCrossing lock for %d ms =======", time.Since(lockTime).Seconds()*1000)
+
 	var currentCarState = getStateForCarNo(carNo, track)
 
 	var lastTileNo = (currentCarState.PosTileNo - 1) % currentCarState.MaxTileNo
@@ -63,6 +70,9 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 		isCarInWaitingQueue(currentCarState.CarNo, crossing)) &&
 		!isCarActiveOnCrossing(currentCarState.CarNo, crossing) {
 
+
+			//Check if other cars are on the crossing
+			mlog.Printf("DEBUG: length of cars on crossing %d", len(crossing.CarsOnCrossing))
 		if len(crossing.CarsOnCrossing) > 0 &&
 			!isCarGoingInSameDirectionAsActiveCar(currentCarState.PosTileNo, crossing)  &&
 				!isCarGoingInSameDirectionAsActiveCar(nextTileNo, crossing){
@@ -143,6 +153,7 @@ func isCarCloseToCrossingTile(nextTileNo int, crossing *Crossing,
 				return true
 			}
 	}
+	mlog.Println("DEBUG: Car is not close to crossing tile")
 	return false
 }
 
@@ -152,6 +163,7 @@ func isCarActiveOnCrossing(carNo int, crossing *Crossing) bool {
 		mlog.Println("DEBUG: Car is already active on crossing")
 		return true
 	}
+	mlog.Println("DEBUG: Car is not active on crossing")
 	return false
 }
 

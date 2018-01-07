@@ -4,7 +4,48 @@ import (
 	"testing"
 	 anki "github.com/okoeth/edge-anki-base"
 	"time"
+	"encoding/json"
 )
+
+/*func TestStatusChannelTimes(t *testing.T) {
+	t.Log("TEST: Update time delays")
+
+	var track = getEmptyStatusArray()
+	cmdCh := make(chan anki.Command)
+	// Consumer
+	statusCh := make(chan anki.Status)
+
+	//Two cars, same lane, different tiles, far away
+	track[0] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 2,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 250}
+	track[1] = anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 5,
+		PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 200}
+
+	go driveCars(track, cmdCh, statusCh)
+
+	for i := 0; i < 100000; i++ {
+		statusCh <- anki.Status{ MsgID: 70, MsgTimestamp: time.Now(), TransitionTimestamp: time.Now(), PosTileNo: 5,
+			PosLocation: 1, LaneNo: 2, MaxTileNo: 6, LaneLength: 800, CarSpeed: 200}
+
+			if i % 16 == 0 {
+				time.Sleep(time.Duration(100)*time.Millisecond)
+			}
+	}
+}*/
+
+func TestMarshallingTimes(t *testing.T) {
+	t.Log("TEST: Marshalling time delays")
+
+	message := "{\"msgID\":39,\"msgName\":\"POSITION_UPDATE\",\"msgTimestamp\":\"2018-01-06T20:27:20.310Z\",\"carNo\":null,\"carID\":null,\"posLocation\":1,\"posTileNo\":20,\"laneOffset\":-67.81199645996094,\"carSpeed\":580,\"laneNo\":null,\"laneLength\":null,\"posTileType\":null,\"posOptions\":[],\"maxTileNo\":0}"
+
+	message = "{\"msgID\":39,\"msgName\":\"POSITION_UPDATE\",\"msgTimestamp\":\"2018-01-07T21:39:18.633Z\",\"carNo\":1,\"carID\":\"035baba16d774f92a24cf4eb80270c2a\",\"posLocation\":22,\"posTileNo\":20,\"laneOffset\":22.97600555419922,\"carSpeed\":506,\"laneNo\":2,\"laneLength\":430,\"posTileType\":\"CURVE\",\"posOptions\":[{\"optTileNo\":5,\"optProbability\":1}],\"maxTileNo\":8}"
+	for i := 0; i < 100000; i++ {
+		logicBegin := time.Now()
+		update := anki.Status{}
+		json.Unmarshal([]byte(message), &update)
+		t.Logf("INFO: Http status handler ended after %f ms", time.Since(logicBegin).Seconds()*1000)
+	}
+}
 
 func TestCanDriveOn(t *testing.T) {
 	t.Log("TEST: Starting testCanDriveOn")

@@ -36,14 +36,11 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 	defer ticker.Stop()
 	for {
 		select {
-		case s := <-statusCh:
-			mlog.Printf("INFO: Received status update from channel")
-			anki.UpdateTrack(track, s)
 		case <-ticker.C:
 			// TODO: Migrate carNo to int and solve 0 vs 1 issue
 
 			logicBegin := time.Now()
-			mlog.Println("INFO: Logic begin")
+			mlog.Println("INFO: ======== Logic begin =========")
 
 			// Update tile ids for obstacle
 			for i, car := range track {
@@ -65,14 +62,13 @@ func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.
 				}
 			}
 
-			mlog.Printf("INFO: Logic ended after %f ms", time.Since(logicBegin).Seconds()*1000)
+			mlog.Printf("INFO: ======= Logic ended after %f ms ==========", time.Since(logicBegin).Seconds()*1000)
 		}
 	}
 }
 
 func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
-	//lock.Lock()
-	//defer lock.Unlock()
+	defer anki.Track_execution_time(anki.Start_execution_time("driveCar"))
 
 	var currentCarState = getStateForCarNo(carNo, track)
 	if messageWithIntegrity(currentCarState) {
@@ -119,6 +115,8 @@ Else
 	return true
  */
 func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
+	defer anki.Track_execution_time(anki.Start_execution_time("canDriveOn"))
+
 	var currentCarState = getStateForCarNo(carNo, track)
 
 	//Check all other car states
@@ -136,6 +134,8 @@ func canDriveOn(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 
 
 func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) int {
+	defer anki.Track_execution_time(anki.Start_execution_time("getAvailableLane"))
+
 	var currentCarState= getStateForCarNo(carNo, track)
 
 	//Check for all possible lanes
@@ -269,6 +269,8 @@ func calculateSpeed(carNo int, track []anki.Status) int {
 Simply drive on
  */
 func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
+	defer anki.Track_execution_time(anki.Start_execution_time("driveAhead"))
+
 	mlog.Printf("INFO: Drive ahead")
 
 	mlog.Printf("CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)

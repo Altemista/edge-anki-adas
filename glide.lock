@@ -1,5 +1,5 @@
-hash: 7386896ee14633f110c3ab1a20c860a12d4484813abded5df47274c4315c7d18
-updated: 2018-01-03T12:24:34.284270026+01:00
+hash: ef06cd1ba5cba453b9df92f4a93d9010188d73f23d36d8f41051b04a4be84314
+updated: 2018-01-07T13:44:20.149075354+01:00
 imports:
 - name: github.com/davecgh/go-spew
   version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
@@ -20,8 +20,20 @@ imports:
   - tree/master/queue
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/gorilla/websocket
+  version: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
+- name: github.com/klauspost/compress
+  version: 6c8db69c4b49dd4df1fff66996cf556176d0b9bf
+  subpackages:
+  - flate
+  - gzip
+  - zlib
+- name: github.com/klauspost/cpuid
+  version: ae832f27941af41db13bd6d8efd2493e3b22415a
+- name: github.com/klauspost/crc32
+  version: bab58d77464aa9cf4e84200c3276da0831fe0c03
 - name: github.com/okoeth/edge-anki-base
-  version: 37311a94a575aebff5d38d43b35a09d647012f34
+  version: 71ff54ac4f3a1d1f2cc3f2fa2846aceae9f07f91
 - name: github.com/okoeth/muxlogger
   version: 92af94f8c27c62a45001c73b8a9bcc54f6db59ea
 - name: github.com/pierrec/lz4
@@ -39,7 +51,11 @@ imports:
   subpackages:
   - zk
 - name: github.com/Shopify/sarama
-  version: f196330231e867c80737487edc4c3512b1431529
+  version: f0c32558d5e8d914b3de1a6f504e2ca88aaa40c4
+- name: github.com/valyala/fasthttp
+  version: d42167fd04f636e20b005e9934159e95454233c7
+  subpackages:
+  - fasthttputil
 - name: github.com/wvanbergen/kafka
   version: e2edea948ddfee841ea9a263b32ccca15f7d6c2f
   subpackages:

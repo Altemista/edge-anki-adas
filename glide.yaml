@@ -12,3 +12,9 @@ import:
   version: ^2.0.0
   subpackages:
   - pat
+- package: github.com/valyala/fasthttp
+  version: v20160617
+- package: github.com/klauspost/compress
+  version: v1.2.1
+- package: github.com/gorilla/websocket
+  version: v1.2.0
