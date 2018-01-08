@@ -29,9 +29,9 @@ import (
 	"net/http"
 	"goji.io/pat"
 	"github.com/rs/cors"
-	"goji.io"
 	"io/ioutil"
 	"fmt"
+	"goji.io"
 )
 
 // Logging
