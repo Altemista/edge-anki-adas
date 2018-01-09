@@ -43,7 +43,7 @@ func init() {
 }
 
 func main() {
-        runtime.GOMAXPROCS(1)
+	runtime.GOMAXPROCS(1)
 	mlog.Println("Processors: ", runtime.GOMAXPROCS(0))	
 
 	// Set-up routes
