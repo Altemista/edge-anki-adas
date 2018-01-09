@@ -1,5 +1,6 @@
 language: go
 go:
+- 1.7.x
 - 1.8.x
 - 1.9.x
 
@@ -21,7 +22,8 @@ before_install:
 - vagrant/boot_cluster.sh
 - vagrant/create_topics.sh
 
-install: make install_dependencies
+install:
+- make install_dependencies
 
 script:
 - make test
@@ -30,6 +32,6 @@ script:
 - make fmt
 
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash)
 
-after_script: vagrant/halt_cluster.sh
+sudo: false

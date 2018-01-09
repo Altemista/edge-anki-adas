@@ -29,7 +29,7 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 	lockTime := time.Now()
 	lock.Lock()
 	defer lock.Unlock()
-	mlog.Printf("INFO: ======= Waited at canDriveCrossing lock for %d ms =======", time.Since(lockTime).Seconds()*1000)
+	mlog.Printf("INFO: ======= Waited at canDriveCrossing lock for %f ms =======", time.Since(lockTime).Seconds()*1000)
 
 	var currentCarState = getStateForCarNo(carNo, track)
 

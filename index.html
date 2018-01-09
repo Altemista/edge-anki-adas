@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+
+    <script type="text/javascript">
+        function myWebsocketStart()
+        {
+            var ws = new WebSocket("ws://localhost:8003/status");
+
+            ws.onopen = function()
+            {
+                // Web Socket is connected, send data using send()
+                setInterval(function(){
+                    ws.send("{\"msgID\":39,\"msgName\":\"POSITION_UPDATE\",\"msgTimestamp\":\"" +  new Date().toISOString() + "\",\"carNo\":1,\"carID\":\"085d6c1a1c264019b5cf2572ccc72417\",\"posLocation\":37,\"posTileNo\":23,\"laneOffset\":-67.81199645996094,\"carSpeed\":603,\"laneNo\":4,\"laneLength\":560,\"posTileType\":\"CURVE\",\"posOptions\":[{\"optTileNo\":1,\"optProbability\":1}],\"maxTileNo\":8}");
+                    var myTextArea = document.getElementById("textarea1");
+                    myTextArea.value = myTextArea.value + "\n" + "First message sent";
+                }, 1);
+
+
+            };
+
+            ws.onclose = function()
+            {
+                var myTextArea = document.getElementById("textarea1");
+                myTextArea.value = myTextArea.value + "\n" + "Connection closed";
+            };
+
+        }
+
+    </script>
+
+</head>
+<body>
+<button onclick="javascript:myWebsocketStart()">Start websocket!</button>
+<textarea id="textarea1">MyTextArea</textarea>
+</body>
+</html>
