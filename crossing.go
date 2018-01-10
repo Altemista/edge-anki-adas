@@ -37,7 +37,6 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 	if lastTileNo == -1 {
 		lastTileNo = 7
 	}
-
 	var nextTileNo = (currentCarState.PosTileNo + 1) % currentCarState.MaxTileNo
 
 	var currentDistanceTravelled = CalculateDistanceTravelled(float32(currentCarState.CarSpeed), getTimeDelta(currentCarState.TransitionTimestamp))
@@ -54,6 +53,19 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 	//Check if last tile was crossing
 	if lastTileNo == crossing.Tile1No || lastTileNo == crossing.Tile2No {
 		delete(crossing.CarsOnCrossing, currentCarState.CarNo)
+	}
+
+	//Search backwards for the last crossing tile id and clean-up
+	for i := 1; i < 4; i++ {
+		nextSearchTileNo := (currentCarState.PosTileNo - i) % currentCarState.MaxTileNo
+		if nextSearchTileNo == -1 {
+			nextSearchTileNo = 7
+		}
+
+		if nextSearchTileNo == crossing.Tile1No || nextSearchTileNo == crossing.Tile2No {
+			delete(crossing.CarsOnCrossing, currentCarState.CarNo)
+			break
+		} 
 	}
 
 	//Check outdated queue entries
