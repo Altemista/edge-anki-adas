@@ -36,14 +36,14 @@ import (
 )
 
 // Logging
-var mlog = log.New(os.Stdout, "EDGE-ANKI-OVTK: ", log.Lshortfile|log.LstdFlags)
+var mlog = log.New(os.Stdout, "EDGE-ANKI-OVTK: ", log.Lshortfile|log.LstdFlags|log.Lmicroseconds)
 
 func init() {
 	flag.Parse()
 }
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	//runtime.GOMAXPROCS(1)
 	mlog.Println("Processors: ", runtime.GOMAXPROCS(0))	
 
 	// Set-up routes
