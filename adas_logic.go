@@ -282,6 +282,13 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
 		cmdCh <- cmd
 	}
+
+	// if car is faster than 700, limit to 700
+	carState := getStateForCarNo(carNo, track)
+	if carState.CarSpeed > 720 {
+		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(700)}
+		cmdCh <- cmd
+	}
 }
 
 /**
