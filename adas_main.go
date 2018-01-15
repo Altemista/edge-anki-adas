@@ -52,7 +52,7 @@ func main() {
 	track := anki.CreateTrack()
 
 	// Set-up channels for status and commands
-	cmdCh, statusCh, err := anki.CreateChannels("edge.adas", mux, &track)
+	cmdCh, statusCh, err := anki.CreateHttpChannels("edge.adas", mux, &track)
 	if err != nil {
 		mlog.Fatalln("FATAL: Could not establish channels: %s", err)
 	}
