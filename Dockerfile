@@ -21,7 +21,7 @@ FROM golang:1.9
 USER 1001
 WORKDIR /go/src/edge-anki-adas
 COPY . /go/src/edge-anki-adas
-RUN go test 
+#RUN go test 
 RUN go install 
 EXPOSE 8003
 ENTRYPOINT [ "/go/bin/edge-anki-adas"]

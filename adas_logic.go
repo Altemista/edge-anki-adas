@@ -153,6 +153,7 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 
 		//Check all other car states of same and next tile
 		for index, otherCarState := range track {
+
 			if timeStampsValid(otherCarState) && index != carNo &&
 				hasCarInFront(otherCarState, currentCarState, suggestedLaneIndex) {
 				mlog.Printf("WARNING: Other car on lane %d, no change possible", suggestedLaneIndex)
@@ -171,7 +172,10 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 }
 
 func timeStampsValid(carState anki.Status) bool {
-	return !carState.MsgTimestamp.IsZero() && !carState.TransitionTimestamp.IsZero()
+	msgTimestampZero := carState.MsgTimestamp.IsZero()
+	transitionTimestampZero := carState.TransitionTimestamp.IsZero()
+	mlog.Printf("Timestamps for car %d, msgZero: %b, transitionZero %b", carState.CarNo, msgTimestampZero, transitionTimestampZero)
+	return !msgTimestampZero && !transitionTimestampZero
 }
 
 func getTimeDelta(transitionTimestamp time.Time) float64 {
