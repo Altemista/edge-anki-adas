@@ -25,12 +25,16 @@ import (
 	"math"
 	anki "github.com/okoeth/edge-anki-base"
 	"sync"
+	"container/list"
 )
 
 var lock sync.Mutex
 var crossing = NewCrossing(3, 7)
+var driveAheadWaitingQueue *list.List
 
 func driveCars(track []anki.Status, cmdCh chan anki.Command, statusCh chan anki.Status) {
+	driveAheadWaitingQueue = list.New()
+
 	//ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
 	ticker := time.NewTicker(200 * 1e6) // 1e6 = ms, 1e9 = s
 	defer ticker.Stop()
@@ -242,7 +246,17 @@ CRITERIA:
 Find car that is blocking us and adjust speed to the speed of the blocking car
  */
 func adjustSpeed(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
+	var currentCarState = getStateForCarNo(carNo, track)
 	speed := calculateSpeed(carNo, track)
+
+	if speed < currentCarState.CarSpeed {
+		driveAheadWaitingQueue.PushBack(
+			CarActionState{
+				Timestamp: time.Now(),
+				CarNo: carNo,
+				Lane: currentCarState.LaneNo,
+				Speed: currentCarState.CarSpeed })
+	}
 
 	//Change speed according to car before
 	cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: string(speed)}
@@ -278,12 +292,18 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CarsOnCrossing)
 
 	// here a reactivate has to happen if car is stopped, and waiting in queue
-	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, &crossing); inQueue {
+	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, crossing.CrossingWaitingCarQueue); inQueue {
 		mlog.Printf("DEBUG: Reactivating car from crossing waiting with speed %d\n", carActionState.Speed)
 		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
 		cmdCh <- cmd
 	}
 
+	// if drive ahead stopped a car entirely, assemble old speed here
+	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, driveAheadWaitingQueue); inQueue {
+		mlog.Printf("DEBUG: Reactivating car from drive ahead queue with speed %d\n", carActionState.Speed)
+		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
+		cmdCh <- cmd
+	}
 
 	// if car is faster than 700, limit to 700
 	carState := getStateForCarNo(carNo, track)

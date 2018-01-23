@@ -90,7 +90,7 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 				!isCarGoingInSameDirectionAsActiveCar(nextTileNo, crossing){
 
 			//Check if car is already waiting
-			if _, inQueue := getCarFromWaitingQueue(carNo, crossing); !inQueue{
+			if _, inQueue := getCarFromWaitingQueue(carNo, crossing.CrossingWaitingCarQueue); !inQueue{
 				crossing.CrossingWaitingCarQueue.PushBack(
 					CarActionState{
 						Timestamp: time.Now(),
@@ -149,7 +149,7 @@ func isCarOnCrossingTile(posTileNo int, crossing *Crossing) bool {
 }
 
 func isCarInWaitingQueue(carNo int, crossing *Crossing) bool {
-	if _, inQueue := getCarFromWaitingQueue(carNo, crossing); inQueue {
+	if _, inQueue := getCarFromWaitingQueue(carNo, crossing.CrossingWaitingCarQueue); inQueue {
 		mlog.Println("DEBUG: Car is already in waiting queue")
 		return true
 	}
@@ -195,9 +195,9 @@ func getTileOfFirstCarOnCrossing(crossing *Crossing) int {
 	return -1
 }
 
-func getCarFromWaitingQueue(carNo int, crossing *Crossing) (*list.Element, bool) {
+func getCarFromWaitingQueue(carNo int, list *list.List) (*list.Element, bool) {
 	// Iterate through list and print its contents.
-	for listElement := crossing.CrossingWaitingCarQueue.Front();
+	for listElement := list.Front();
 		listElement != nil; listElement = listElement.Next() {
 		if listElement.Value.(CarActionState).CarNo == carNo {
 			return listElement, true
@@ -206,9 +206,9 @@ func getCarFromWaitingQueue(carNo int, crossing *Crossing) (*list.Element, bool)
 	return nil, false
 }
 
-func tryRemoveCarFromQueue(carNo int, crossing *Crossing) (CarActionState, bool) {
+func tryRemoveCarFromQueue(carNo int, list *list.List) (CarActionState, bool) {
 	// here a reactivate has to happen if car is stopped
-	if listElement, inQueue := getCarFromWaitingQueue(carNo, crossing); inQueue {
+	if listElement, inQueue := getCarFromWaitingQueue(carNo, list); inQueue {
 		crossing.CrossingWaitingCarQueue.Remove(listElement)
 		stoppedCarState := listElement.Value.(CarActionState)
 		return stoppedCarState, true
