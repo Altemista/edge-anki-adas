@@ -256,15 +256,12 @@ func calculateSpeed(carNo int, track []anki.Status) int {
 
 	//Check all other car states
 	for index, otherCarState := range track {
-		if index > carNo {
-			if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo &&
-				otherCarState.PosTileNo == currentCarState.PosTileNo {
-				mlog.Printf("WARNING: Other car in front")
-				blockingCarState = otherCarState
-				return blockingCarState.CarSpeed
-			}
+		if !otherCarState.MsgTimestamp.IsZero() && index != carNo && otherCarState.LaneNo == currentCarState.LaneNo &&
+			otherCarState.PosTileNo == currentCarState.PosTileNo {
+			mlog.Printf("WARNING: Other car in front")
+			blockingCarState = otherCarState
+			return blockingCarState.CarSpeed
 		}
-
 	}
 	return 0
 }
@@ -280,12 +277,13 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	mlog.Printf("CrossingWaitingCarQueue: %+v\n", crossing.CrossingWaitingCarQueue)
 	mlog.Printf("CrossingTileCarQueue: %+v\n", crossing.CarsOnCrossing)
 
-	// here a reactivate has to happen if car is stopped
+	// here a reactivate has to happen if car is stopped, and waiting in queue
 	if carActionState, inQueue := tryRemoveCarFromQueue(carNo, &crossing); inQueue {
 		mlog.Printf("DEBUG: Reactivating car from crossing waiting with speed %d\n", carActionState.Speed)
 		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(carActionState.Speed)}
 		cmdCh <- cmd
 	}
+
 
 	// if car is faster than 700, limit to 700
 	carState := getStateForCarNo(carNo, track)
