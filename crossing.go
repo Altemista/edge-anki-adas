@@ -92,7 +92,7 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 			//Check if car is already waiting
 			if _, inQueue := getCarFromWaitingQueue(carNo, crossing.CrossingWaitingCarQueue); !inQueue{
 
-				if currentCarState.CarSpeed > 0 {
+				if currentCarState.CarSpeed > 200 {
 					crossing.CrossingWaitingCarQueue.PushBack(
 						CarActionState{
 							Timestamp: time.Now(),
@@ -128,12 +128,15 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 
 			if crossingNo != -1 {
 				mlog.Println("DEBUG: Adding car to cars on crossing")
-				crossing.CarsOnCrossing[carNo] =
-					CarActionState{CarNo: carNo,
-						Timestamp: time.Now(),
-						Lane: currentCarState.LaneNo,
-						Speed: currentCarState.CarSpeed,
-						PosTileNo: crossingNo}
+
+				if currentCarState.CarSpeed > 200 {
+					crossing.CarsOnCrossing[carNo] =
+						CarActionState{CarNo: carNo,
+							Timestamp: time.Now(),
+							Lane: currentCarState.LaneNo,
+							Speed: currentCarState.CarSpeed,
+							PosTileNo: crossingNo}
+				}
 			}
 		}
 	}
