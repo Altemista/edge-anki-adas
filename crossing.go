@@ -91,12 +91,15 @@ func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
 
 			//Check if car is already waiting
 			if _, inQueue := getCarFromWaitingQueue(carNo, crossing.CrossingWaitingCarQueue); !inQueue{
-				crossing.CrossingWaitingCarQueue.PushBack(
-					CarActionState{
-						Timestamp: time.Now(),
-						CarNo: carNo,
-						Lane: currentCarState.LaneNo,
-						Speed: currentCarState.CarSpeed })
+
+				if currentCarState.CarSpeed > 0 {
+					crossing.CrossingWaitingCarQueue.PushBack(
+						CarActionState{
+							Timestamp: time.Now(),
+							CarNo:     carNo,
+							Lane:      currentCarState.LaneNo,
+							Speed:     currentCarState.CarSpeed})
+				}
 			}
 
 			mlog.Println("WARNING: Can not pass crossing")
