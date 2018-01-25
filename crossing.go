@@ -23,7 +23,7 @@ func NewCrossing(tile1No int, tile2No int) Crossing {
 	CrossingWaitingCarQueue: list.New() }
 }
 
-func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing) bool {
+func canDriveCrossing(carNo int, track []anki.Status, crossing *Crossing, cmdCh chan anki.Command) bool {
 	defer anki.Track_execution_time(anki.Start_execution_time("canDriveCrossing"))
 
 	lockTime := time.Now()
@@ -215,7 +215,7 @@ func getCarFromWaitingQueue(carNo int, list *list.List) (*list.Element, bool) {
 func tryRemoveCarFromQueue(carNo int, list *list.List) (CarActionState, bool) {
 	// here a reactivate has to happen if car is stopped
 	if listElement, inQueue := getCarFromWaitingQueue(carNo, list); inQueue {
-		crossing.CrossingWaitingCarQueue.Remove(listElement)
+		list.Remove(listElement)
 		stoppedCarState := listElement.Value.(CarActionState)
 		return stoppedCarState, true
 	}

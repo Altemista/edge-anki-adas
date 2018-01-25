@@ -77,10 +77,21 @@ func driveCar(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 	var currentCarState = getStateForCarNo(carNo, track)
 	if messageWithIntegrity(currentCarState) {
 		mlog.Printf("CarNo %d, %+v", carNo, currentCarState)
-		if canDriveCrossing(carNo, track, &crossing) {
+		if canDriveCrossing(carNo, track, &crossing, cmdCh) {
 			if canDriveOn(carNo, track, cmdCh) {
+				if currentCarState.LightsOn {
+					//Reset light
+					track[carNo].LightsOn = false
+					lightsOff(carNo, cmdCh)
+				}
+
 				driveAhead(carNo, track, cmdCh)
 			} else {
+				if !currentCarState.LightsOn {
+					track[carNo].LightsOn = true
+					lightsOn(carNo, cmdCh)
+				}
+
 				if availableLane := getAvailableLane(carNo, track, cmdCh); availableLane != -1 {
 					driveAhead(carNo, track, cmdCh)
 					changeLane(carNo, track, cmdCh, availableLane)
@@ -201,8 +212,10 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 
 	var nextTileNo = (currentCarState.PosTileNo+1) % currentCarState.MaxTileNo
 
-	// Other car must be on same lane and on next or current tile
-	if otherCarState.LaneNo == laneNo && (
+	// Other car must be on same lane or neighbor lane and on next or current tile
+	if (otherCarState.LaneNo == laneNo ||
+		otherCarState.LaneNo == laneNo-1 ||
+		otherCarState.LaneNo == laneNo+1) && (
 		otherCarState.PosTileNo == currentCarState.PosTileNo ||
 			otherCarState.PosTileNo == nextTileNo) {
 
@@ -262,6 +275,16 @@ func adjustSpeed(carNo int, track []anki.Status, cmdCh chan anki.Command) bool {
 	cmd := anki.Command{ CarNo: carNo, Command: "s", Param1: string(speed)}
 	cmdCh <- cmd
 	return true
+}
+
+func lightsOn(carNo int, cmdCh chan anki.Command) {
+	cmd := anki.Command{ CarNo: carNo, Command: "l", }
+	cmdCh <- cmd
+}
+
+func lightsOff(carNo int, cmdCh chan anki.Command) {
+	cmd := anki.Command{ CarNo: carNo, Command: "lp", }
+	cmdCh <- cmd
 }
 
 func calculateSpeed(carNo int, track []anki.Status) int {
