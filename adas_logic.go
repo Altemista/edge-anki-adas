@@ -157,8 +157,7 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 	var suggestedLaneIndex= -1
 	var laneAvailable= false
 
-	//for _, laneOffset := range []int{1, -1, 2, -2, 3, -3} {
-	for _, laneOffset := range []int{2, -2, 3, -3} {
+	for _, laneOffset := range []int{1, -1, 2, -2, 3, -3} {
 		laneAvailable = true
 		suggestedLaneIndex = currentCarState.LaneNo + laneOffset
 
@@ -332,8 +331,8 @@ func driveAhead(carNo int, track []anki.Status, cmdCh chan anki.Command) {
 
 	// if car is faster than 700, limit to 700
 	carState := getStateForCarNo(carNo, track)
-	if carState.CarSpeed > 720 {
-		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(700)}
+	if carState.CarSpeed > 650 {
+		cmd := anki.Command{CarNo: carNo, Command: "s", Param1: strconv.Itoa(600)}
 		cmdCh <- cmd
 	}
 }
