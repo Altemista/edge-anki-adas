@@ -189,7 +189,7 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 func timeStampsValid(carState anki.Status) bool {
 	msgTimestampZero := carState.MsgTimestamp.IsZero()
 	transitionTimestampZero := carState.TransitionTimestamp.IsZero()
-	mlog.Printf("Timestamps for car %d, msgZero: %b, transitionZero %b", carState.CarNo, msgTimestampZero, transitionTimestampZero)
+	//mlog.Printf("Timestamps for car %d, msgZero: %b, transitionZero %b", carState.CarNo, msgTimestampZero, transitionTimestampZero)
 	return !msgTimestampZero && !transitionTimestampZero
 }
 
@@ -236,7 +236,9 @@ func hasCarInFront(otherCarState anki.Status, currentCarState anki.Status, laneN
 		mlog.Printf("DEBUG: Car pos: tile %d, pos: %f", currentCarState.PosTileNo, currentDistanceTravelled)
 		mlog.Printf("DEBUG: Car pos other: tile %d, pos: %f", otherCarState.PosTileNo, otherDistanceTravelled)
 		mlog.Printf("DEBUG: Car speed: %d", currentCarState.CarSpeed)
-		mlog.Printf("DEBUG: Car speed other: %d", otherCarState.CarSpeed)
+		mlog.Printf("DEBUG: Car speed other: %d", otherCarState.LaneNo)
+		mlog.Printf("DEBUG: Car lane: %d", currentCarState.LaneNo)
+		mlog.Printf("DEBUG: Car lane other: %d", otherCarState.CarSpeed)
 		mlog.Printf("DEBUG: Car time delta: %f", currentTimeDelta)
 		mlog.Printf("DEBUG: Car time delta other: %f", otherTimeDelta)
 		mlog.Printf("DEBUG: Lane length %d", currentCarState.LaneLength)
