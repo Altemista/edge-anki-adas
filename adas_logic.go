@@ -192,7 +192,7 @@ func timeStampsValid(carState anki.Status) bool {
 	//mlog.Printf("Timestamps for car %d, msgZero: %b, transitionZero %b", carState.CarNo, msgTimestampZero, transitionTimestampZero)
 
 	//If car is not obstacle, last message should be received in last 3 seconds (active)
-	if !msgTimestampZero && !transitionTimestampZero && carState.CarNo != -1 && carState.CarNo != -2 && time.Since(carState.MsgTimestamp).Seconds() < 3  {
+	if !msgTimestampZero && !transitionTimestampZero && carState.CarNo != -1 && carState.CarNo != -2 && time.Since(carState.MsgTimestamp).Seconds() < 5  {
 		return true
 	} else if !msgTimestampZero && !transitionTimestampZero && (carState.CarNo == -1 || carState.CarNo == -2) {
 		return true
