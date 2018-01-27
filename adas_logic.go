@@ -188,8 +188,16 @@ func getAvailableLane(carNo int, track []anki.Status, cmdCh chan anki.Command) i
 func timeStampsValid(carState anki.Status) bool {
 	msgTimestampZero := carState.MsgTimestamp.IsZero()
 	transitionTimestampZero := carState.TransitionTimestamp.IsZero()
+
 	//mlog.Printf("Timestamps for car %d, msgZero: %b, transitionZero %b", carState.CarNo, msgTimestampZero, transitionTimestampZero)
-	return !msgTimestampZero && !transitionTimestampZero
+
+	//If car is not obstacle, last message should be received in last 3 seconds (active)
+	if !msgTimestampZero && !transitionTimestampZero && carState.CarNo != -1 && carState.CarNo != -2 && time.Since(carState.MsgTimestamp).Seconds() < 3  {
+		return true
+	} else if !msgTimestampZero && !transitionTimestampZero && (carState.CarNo == -1 || carState.CarNo == -2) {
+		return true
+	}
+	return false
 }
 
 func getTimeDelta(transitionTimestamp time.Time) float64 {
