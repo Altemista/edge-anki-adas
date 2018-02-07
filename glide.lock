@@ -1,0 +1,61 @@
+hash: ef06cd1ba5cba453b9df92f4a93d9010188d73f23d36d8f41051b04a4be84314
+updated: 2018-02-07T17:33:04.839042+01:00
+imports:
+- name: github.com/davecgh/go-spew
+  version: 87df7c60d5820d0f8ae11afede5aa52325c09717
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: ef9aaa7ea8bd2448429af1a77cf41b2b3b34bdd6
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/golang-collections/collections
+  version: 604e922904d35e97f98a774db7881f049cd8d970
+  subpackages:
+  - stack
+  - tree/master/queue
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/gorilla/websocket
+  version: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
+- name: github.com/klauspost/compress
+  version: 6c8db69c4b49dd4df1fff66996cf556176d0b9bf
+- name: github.com/okoeth/edge-anki-base
+  version: fde74bde48a3010a5b95ab5f811669c537fc03ba
+- name: github.com/okoeth/muxlogger
+  version: 92af94f8c27c62a45001c73b8a9bcc54f6db59ea
+- name: github.com/pierrec/lz4
+  version: ed8d4cc3b461464e69798080a0092bd028910298
+- name: github.com/pierrec/xxHash
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
+  subpackages:
+  - xxHash32
+- name: github.com/rcrowley/go-metrics
+  version: 8732c616f52954686704c8645fe1a9d59e9df7c1
+- name: github.com/rs/cors
+  version: 7af7a1e09ba336d2ea14b1ce73bf693c6837dbf6
+- name: github.com/samuel/go-zookeeper
+  version: c4fab1ac1bec58281ad0667dc3f0907a9476ac47
+  subpackages:
+  - zk
+- name: github.com/Shopify/sarama
+  version: 3b1b38866a79f06deddf0487d5c27ba0697ccd65
+- name: github.com/valyala/fasthttp
+  version: d42167fd04f636e20b005e9934159e95454233c7
+- name: github.com/wvanbergen/kafka
+  version: e2edea948ddfee841ea9a263b32ccca15f7d6c2f
+  subpackages:
+  - consumergroup
+- name: github.com/wvanbergen/kazoo-go
+  version: f72d8611297a7cf105da904c04198ad701a60101
+- name: goji.io
+  version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
+  subpackages:
+  - internal
+  - pat
+  - pattern
+testImports: []
